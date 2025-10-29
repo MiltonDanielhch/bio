@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------
+  # Backend Laravel (Aplicación Principal)
+  # ---------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile # Asumiendo que tienes un Dockerfile en ./backend
+    container_name: gobebio-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - gobebio-net
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: /bin/sh -c "php artisan storage:link --force && /usr/local/bin/docker-entrypoint.sh unitd --no-daemon"
+
+  # ---------------------------------------------------
+  # Microservicio Biométrico (FastAPI)
+  # ---------------------------------------------------
+  zkservice:
+    build:
+      context: ./zkService
+      dockerfile: Dockerfile
+    container_name: gobebio-zkservice
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./zkService:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    depends_on:
+      - mysql
+    networks:
+      - gobebio-net
+
+  # ---------------------------------------------------
+  # Base de Datos MySQL
+  # ---------------------------------------------------
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    container_name: gobebio-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+    volumes:
+      - gobebio-mysql-data:/var/lib/mysql
+    networks:
+      - gobebio-net
+
+  # ---------------------------------------------------
+  # Redis (Caché y Colas)
+  # ---------------------------------------------------
+  redis:
+    image: 'redis:alpine'
+    container_name: gobebio-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - gobebio-redis-data:/data
+    networks:
+      - gobebio-net
+
+networks:
+  gobebio-net:
+    driver: bridge
+
+volumes:
+  gobebio-mysql-data:
+    driver: local
+  gobebio-redis-data:
+    driver: local

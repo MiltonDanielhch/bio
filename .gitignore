@@ -1,0 +1,60 @@
+# Archivos de configuración local (¡MUY IMPORTANTE!)
+# Contiene secretos como contraseñas de base de datos y claves de API.
+.env
+
+# Archivos de IDE y sistema operativo
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# -----------------------------------------------------------------------------
+# Laravel (dentro de la carpeta /backend)
+# -----------------------------------------------------------------------------
+
+# Dependencias de Composer
+backend/vendor/
+
+# Dependencias de NPM
+backend/node_modules/
+
+# Archivo de entorno específico de Laravel (para desarrollo sin Docker)
+backend/.env
+
+# Archivos de caché y compilados de Laravel
+backend/bootstrap/cache/*.php
+backend/storage/framework/
+backend/storage/logs/*.log
+
+# El enlace simbólico de 'storage'. Se crea en cada entorno.
+backend/public/storage
+
+# Archivos generados por Vite/Mix
+backend/public/hot
+backend/public/build/
+backend/public/mix-manifest.json
+
+# Archivos de Homestead
+backend/Homestead.json
+backend/Homestead.yaml
+
+# Logs de NPM/Yarn
+backend/npm-debug.log
+backend/yarn-error.log
+
+# Cache de PHPUnit
+backend/.phpunit.cache
+
+# -----------------------------------------------------------------------------
+# Python / FastAPI (dentro de la carpeta /zkService)
+# -----------------------------------------------------------------------------
+
+# Entorno virtual de Python
+zkService/venv/
+
+# Archivos de caché de Python
+zkService/__pycache__/
+*.pyc

@@ -30,6 +30,8 @@ class AsistenciaMaestrosSeeder extends Seeder
             RegistrosAsistenciaSeeder::class,
             IncidenciasTableSeeder::class,
             ReportesAsistenciaSeeder::class,
+            // LogsSistemaSeeder::class,
+            AsistenciaMenuAppendSeeder::class,
         ]);
     }
 }
