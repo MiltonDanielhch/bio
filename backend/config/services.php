@@ -30,5 +30,10 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'zkservice' => [
+        'url' => env('ZKSERVICE_URL', 'http://127.0.0.1:8001'),
+        'key' => env('ZKSERVICE_API_KEY'),
+        'password' => env('ZKSERVICE_DEVICE_PASSWORD', ''),
+    ],
 
 ];

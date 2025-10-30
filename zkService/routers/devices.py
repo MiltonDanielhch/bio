@@ -55,3 +55,13 @@ async def test_voice(
     password: Optional[int] = Query(0, title="Clave de comunicación del dispositivo")
 ):
     return await zk_service.test_voice_on_device(ip, port, password)
+
+@router.delete("/{ip}/attendance",
+             status_code=204,
+             summary="Borrar todos los registros de asistencia de un dispositivo")
+async def clear_attendance(
+    ip: str = Path(..., title="Dirección IP del dispositivo", regex=r"^\d{1,3}(\.\d{1,3}){3}$"),
+    port: int = Query(4370, title="Puerto del dispositivo"),
+    password: Optional[int] = Query(0, title="Clave de comunicación del dispositivo")
+):
+    return await zk_service.clear_attendance_from_device(ip, port, password)

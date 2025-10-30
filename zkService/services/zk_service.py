@@ -141,6 +141,15 @@ class DeviceConnection:
         logger.info(f"Probando voz en {self.ip}...")
         await asyncio.to_thread(self.conn.test_voice, index)
 
+    async def clear_attendance(self) -> None:
+        """Borra todos los registros de asistencia del dispositivo."""
+        if not self.conn:
+            raise ConnectionError("No hay una conexión activa.")
+        
+        logger.info(f"Borrando registros de asistencia de {self.ip}...")
+        await asyncio.to_thread(self.conn.clear_attendance)
+        logger.info(f"Registros de asistencia borrados en {self.ip}.")
+
 
 async def get_attendance_from_device(ip: str, port: int, password: Optional[int] = 0) -> AttendanceResponse:
     """
@@ -206,6 +215,20 @@ async def test_voice_on_device(ip: str, port: int, password: Optional[int] = 0):
         logger.exception(f"Fallo crítico en el servicio de prueba de voz para {ip}: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno del servicio: {e}")
 
+
+async def clear_attendance_from_device(ip: str, port: Optional[int] = None, password: Optional[int] = None):
+    """
+    Función de servicio para borrar los registros de asistencia de un dispositivo.
+    """
+    try:
+        async with DeviceConnection(ip, port, password) as device:
+            await device.clear_attendance()
+            return {"status": "ok", "message": f"Registros de asistencia borrados en el dispositivo {ip}."}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.exception(f"Fallo crítico al borrar asistencia para {ip}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servicio: {e}")
 
 async def cleanup_devices():
     """Cierra todas las conexiones activas que puedan haber quedado abiertas."""
