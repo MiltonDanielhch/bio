@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('numero_serie')->unique();
             $table->string('direccion_ip', 45)->nullable();
             $table->unsignedSmallInteger('puerto')->default(4370);
-            $table->unsignedSmallInteger('password')->default(0);
+            $table->unsignedInteger('password')->default(0); // Cambiado de unsignedSmallInteger a unsignedInteger
             $table->string('ubicacion')->nullable();
             $table->enum('estado', ['activo', 'inactivo', 'mantenimiento'])->default('activo');
             $table->timestamp('ultima_conexion')->nullable();
@@ -31,6 +31,7 @@ return new class extends Migration
 
             $table->index(['direccion_ip']);
             $table->index(['sucursal_id', 'estado']);
+            // $table->unique(['empleado_id', 'fecha_hora']);
         });
     }
 

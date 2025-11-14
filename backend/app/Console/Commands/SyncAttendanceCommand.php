@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Jobs\SyncAttendanceJob;
+use App\Models\Dispositivo; // Importa el modelo Dispositivo
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SyncAttendanceCommand extends Command
 {
@@ -12,16 +14,14 @@ class SyncAttendanceCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'zk:sync-attendance {ip : The IP address of the ZKTeco device}
-                                               {--clear : Clear attendance log on device after syncing}
-                                               {--password= : The communication key/password for the device}';
+    protected $signature = 'zk:sync-attendance {ip?} {--clear}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sync attendance records from a ZKTeco device and save them to the database';
+    protected $description = 'Sincroniza los registros de asistencia desde los dispositivos ZKTeco.';
 
     /**
      * Execute the console command.
@@ -32,17 +32,31 @@ class SyncAttendanceCommand extends Command
     {
         $ip = $this->argument('ip');
         $clear = $this->option('clear');
-        // Usar la contraseña de la opción, o si no, la configurada por defecto.
-        $password = $this->option('password') ?? config('services.zkservice.password');
 
-        $this->info("Dispatching job to sync attendance from device: {$ip}");
-        if ($clear) {
-            $this->warn('The --clear flag is set. Records will be deleted from the device after sync.');
+        if ($ip) {
+            // Si se proporciona una IP, sincroniza solo ese dispositivo
+            $dispositivo = Dispositivo::where('direccion_ip', $ip)->first();
+
+            if ($dispositivo) {
+                SyncAttendanceJob::dispatch($dispositivo, $clear);
+                $this->info("Sincronización de asistencia iniciada para el dispositivo con IP: {$ip}.");
+            } else {
+                $this->error("No se encontró ningún dispositivo con la IP: {$ip}.");
+            }
+        } else {
+            // Si no se proporciona una IP, sincroniza todos los dispositivos activos
+            $dispositivos = Dispositivo::where('estado', 'activo')->get(); // Usar el scope 'activos' o el campo 'estado'
+
+            if ($dispositivos->count() > 0) {
+                foreach ($dispositivos as $dispositivo) {
+                    SyncAttendanceJob::dispatch($dispositivo, $clear);
+                }
+                $this->info("Sincronización de asistencia iniciada para todos los dispositivos activos.");
+            } else {
+                $this->warn("No se encontraron dispositivos activos para sincronizar.");
+            }
         }
 
-        SyncAttendanceJob::dispatch($ip, $clear, $password);
-
-        $this->info('Job dispatched successfully!');
         return Command::SUCCESS;
     }
 }

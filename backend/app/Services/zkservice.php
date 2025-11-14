@@ -3,59 +3,94 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Log;
 
 class ZkService
 {
-    protected PendingRequest $client;
+    protected $baseUrl;
+    protected $apiKey;
 
+    /**
+     * Constructor para inicializar el servicio con la URL base y la API Key.
+     */
     public function __construct()
     {
-        $baseUrl = config('services.zkservice.url');
-        $apiKey = config('services.zkservice.key');
+        // Obtiene la configuración desde config/services.php
+        $this->baseUrl = config('services.zkservice.url');
+        $this->apiKey = config('services.zkservice.key');
 
-        if (!$baseUrl || !$apiKey) {
-            throw new \Exception('ZkService URL or API Key is not configured.');
+        if (!$this->baseUrl || !$this->apiKey) {
+            Log::error('ZkService: La URL del servicio o la API Key no están configuradas en config/services.php');
+            throw new \Exception('La configuración del servicio biométrico (zkservice) no está completa.');
         }
+    }
 
-        $this->client = Http::withHeaders([
-            'X-API-Key' => $apiKey,
-            'Accept' => 'application/json',
-        ])->baseUrl($baseUrl);
+    /**
+     * Obtiene la información de un dispositivo.
+     *
+     * @param string $ip
+     * @param int $port
+     * @param int|null $password
+     * @return array|null
+     */
+    public function getDeviceInfo(string $ip, int $port, ?int $password = 0): ?array
+    {
+        $endpoint = "{$this->baseUrl}/devices/{$ip}/info";
+        $params = ['port' => $port, 'password' => $password];
+
+        return $this->makeRequest('get', $endpoint, $params);
     }
 
     /**
      * Obtiene los registros de asistencia de un dispositivo.
+     *
+     * @param string $ip
+     * @param int $port
+     * @param int|null $password
+     * @return array|null
      */
-    public function getAttendance(string $ip, ?string $password = null): ?array
+    public function getAttendance(string $ip, int $port, ?int $password = 0): ?array
     {
-        $queryParams = [];
-        if ($password) {
-            $queryParams['password'] = $password;
-        }
+        $endpoint = "{$this->baseUrl}/devices/{$ip}/attendance";
+        $params = ['port' => $port, 'password' => $password];
 
-        $response = $this->client->get("/devices/{$ip}/attendance", $queryParams);
+        $response = $this->makeRequest('get', $endpoint, $params);
 
-        if ($response->successful()) {
-            return $response->json('records');
-        }
-
-        Log::error("Failed to get attendance from {$ip}: " . $response->body(), ['status' => $response->status()]);
-        return null;
+        // El job espera un array de registros, no el objeto completo de respuesta.
+        return $response['records'] ?? null;
     }
 
     /**
-     * Borra los registros de asistencia de un dispositivo.
+     * Limpia los registros de asistencia de un dispositivo.
+     *
+     * @param string $ip
+     * @param int $port
+     * @param int|null $password
+     * @return array|null
      */
-    public function clearAttendance(string $ip, ?string $password = null): bool
+    public function clearAttendance(string $ip, int $port, ?int $password = 0): ?array
     {
-        $queryParams = [];
-        if ($password) {
-            $queryParams['password'] = $password;
-        }
+        $endpoint = "{$this->baseUrl}/devices/{$ip}/attendance";
+        $params = ['port' => $port, 'password' => $password];
 
-        $response = $this->client->delete("/devices/{$ip}/attendance", $queryParams);
-        return $response->successful();
+        return $this->makeRequest('delete', $endpoint, $params);
+    }
+
+    /**
+     * Método privado para realizar las peticiones HTTP.
+     */
+    private function makeRequest(string $method, string $endpoint, array $params = []): ?array
+    {
+        try {
+            $response = Http::withHeaders(['x-api-key' => $this->apiKey])
+                ->timeout(15) // Aumentar el timeout para operaciones de hardware
+                ->{$method}($endpoint, $params);
+
+            return $response->throw()->json();
+        } catch (\Exception $e) {
+            Log::error("Error en la petición a ZkService ({$endpoint}): " . $e->getMessage());
+            // Relanzar la excepción para que el controlador la capture y muestre un mensaje de error.
+            throw $e;
+        }
     }
 }

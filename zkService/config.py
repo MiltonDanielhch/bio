@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Intervalo en segundos para verificar el estado de los dispositivos.
     DEVICE_CHECK_INTERVAL: int = 60
-
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding='utf-8',

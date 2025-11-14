@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AsignacionHorarioController;
 use App\Http\Controllers\DepartamentoController;
+use App\Http\Controllers\Admin\DispositivoController; // Importa el nuevo controlador
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ReporteAsistenciaController;
@@ -98,6 +99,21 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
         Route::delete('/{reporte}', [ReporteAsistenciaController::class, 'destroy'])->name('admin.reportes-asistencia.destroy');
         Route::get('/{reporte}', [ReporteAsistenciaController::class, 'show'])->name('admin.reportes-asistencia.show');
         Route::get('/{reporte}/download', [ReporteAsistenciaController::class, 'download'])->name('admin.reportes-asistencia.download');
+    });
+
+    // ──────────────── DISPOSITIVOS ────────────────
+    Route::prefix('dispositivos')->group(function () {
+        Route::get('/', [DispositivoController::class, 'index'])->name('admin.dispositivos.index');
+        Route::get('/ajax/list', [DispositivoController::class, 'list'])->name('admin.dispositivos.ajax.list'); // Para tablas con AJAX
+        Route::get('/create', [DispositivoController::class, 'create'])->name('admin.dispositivos.create');
+        Route::post('/', [DispositivoController::class, 'store'])->name('admin.dispositivos.store');
+        Route::get('/{dispositivo}/edit', [DispositivoController::class, 'edit'])->name('admin.dispositivos.edit');
+        Route::put('/{dispositivo}', [DispositivoController::class, 'update'])->name('admin.dispositivos.update');
+        Route::delete('/{dispositivo}', [DispositivoController::class, 'destroy'])->name('admin.dispositivos.destroy');
+        Route::get('/{dispositivo}', [DispositivoController::class, 'show'])->name('admin.dispositivos.show');
+        // Rutas adicionales para acciones específicas del dispositivo
+        Route::post('/{dispositivo}/test-connection', [DispositivoController::class, 'testConnection'])->name('admin.dispositivos.test_connection');
+        Route::post('/{dispositivo}/sync-now', [DispositivoController::class, 'syncNow'])->name('admin.dispositivos.sync_now');
     });
 
     // ──────────────── PERSONAS ────────────────
