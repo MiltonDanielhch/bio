@@ -21,6 +21,20 @@ class UsersTableSeeder extends Seeder
         \DB::table('users')->insert(array (
             0 =>
             array (
+                'id' => 3,
+                'role_id' => 3, // Rol de Técnico
+                'name' => 'Técnico',
+                'email' => 'tecnico@admin.com',
+                'avatar' => 'users/default.png',
+                'email_verified_at' => NULL,
+                'password' => '$2y$10$ILLZfhsbwinK3235ceVa7O0mj3M5fr33wb3z28aDqiBWLwBfSUzYy', // password
+                'remember_token' => NULL,
+                'settings' => '{"locale":"es"}',
+                'created_at' => '2025-11-15 10:00:00',
+                'updated_at' => '2025-11-15 10:00:00',
+            ),
+            1 =>
+            array (
                 'id' => 1,
                 'role_id' => 1,
                 'name' => 'Admin',
@@ -33,7 +47,7 @@ class UsersTableSeeder extends Seeder
                 'created_at' => '2024-10-18 14:28:45',
                 'updated_at' => '2024-10-18 14:33:30',
             ),
-            1 =>
+            2 =>
             array (
                 'id' => 2,
                 'role_id' => 2,

@@ -96,8 +96,6 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
         Route::get('/ajax/list', [ReporteAsistenciaController::class, 'list'])->name('admin.reportes-asistencia.ajax.list');
         Route::get('/create', [ReporteAsistenciaController::class, 'create'])->name('admin.reportes-asistencia.create');
         Route::post('/', [ReporteAsistenciaController::class, 'store'])->name('admin.reportes-asistencia.store');
-        Route::get('/{reporte}/edit', [ReporteAsistenciaController::class, 'edit'])->name('admin.reportes-asistencia.edit');
-        Route::put('/{reporte}', [ReporteAsistenciaController::class, 'update'])->name('admin.reportes-asistencia.update');
         Route::delete('/{reporte}', [ReporteAsistenciaController::class, 'destroy'])->name('admin.reportes-asistencia.destroy');
         Route::get('/{reporte}', [ReporteAsistenciaController::class, 'show'])->name('admin.reportes-asistencia.show');
         Route::get('/{reporte}/download', [ReporteAsistenciaController::class, 'download'])->name('admin.reportes-asistencia.download');
@@ -150,6 +148,28 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
         Route::get('/{map}/edit', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'edit'])->name('edit');
         Route::put('/{map}', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'update'])->name('update');
         Route::delete('/{map}', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'destroy'])->name('destroy');
+    });
+
+    // ──────────────── TIPOS DE INCIDENCIA ────────────────
+    Route::prefix('tipos-incidencia')->group(function () {
+        Route::get('/', [TipoIncidenciaController::class, 'index'])->name('admin.tipos-incidencia.index');
+        Route::get('/ajax/list', [TipoIncidenciaController::class, 'list'])->name('admin.tipos-incidencia.ajax.list');
+        Route::get('/create', [TipoIncidenciaController::class, 'create'])->name('admin.tipos-incidencia.create');
+        Route::post('/', [TipoIncidenciaController::class, 'store'])->name('admin.tipos-incidencia.store');
+        Route::get('/{tipo}/edit', [TipoIncidenciaController::class, 'edit'])->name('admin.tipos-incidencia.edit');
+        Route::put('/{tipo}', [TipoIncidenciaController::class, 'update'])->name('admin.tipos-incidencia.update');
+        Route::delete('/{tipo}', [TipoIncidenciaController::class, 'destroy'])->name('admin.tipos-incidencia.destroy');
+    });
+
+    // ──────────────── INCIDENCIAS ────────────────
+    Route::prefix('incidencias')->group(function () {
+        Route::get('/', [\App\Http\Controllers\IncidenciaController::class, 'index'])->name('admin.incidencias.index');
+        Route::get('/ajax/list', [\App\Http\Controllers\IncidenciaController::class, 'list'])->name('admin.incidencias.ajax.list');
+        Route::get('/create', [\App\Http\Controllers\IncidenciaController::class, 'create'])->name('admin.incidencias.create');
+        Route::post('/', [\App\Http\Controllers\IncidenciaController::class, 'store'])->name('admin.incidencias.store');
+        Route::get('/{incidencia}/edit', [\App\Http\Controllers\IncidenciaController::class, 'edit'])->name('admin.incidencias.edit');
+        Route::put('/{incidencia}', [\App\Http\Controllers\IncidenciaController::class, 'update'])->name('admin.incidencias.update');
+        Route::delete('/{incidencia}', [\App\Http\Controllers\IncidenciaController::class, 'destroy'])->name('admin.incidencias.destroy');
     });
 
 

@@ -18,13 +18,13 @@ class ReporteAsistenciaController extends Controller
     /* ----------  LISTADO  ---------- */
     public function index()
     {
-        $this->authorize('viewAny', ReporteAsistencia::class);
+        // $this->authorize('browse_reportes_asistencia');
         return view('admin.reportes-asistencia.browse');
     }
 
     public function list(\Illuminate\Http\Request $request)
     {
-        $this->authorize('viewAny', ReporteAsistencia::class);
+        // $this->authorize('browse_reportes_asistencia');
         $search   = $request->get('search', '');
         $paginate = $request->get('paginate', 10);
 
@@ -39,20 +39,21 @@ class ReporteAsistenciaController extends Controller
     /* ----------  VER  ---------- */
     public function show(ReporteAsistencia $reporte)
     {
-        $this->authorize('view', $reporte);
+        // $this->authorize('read_reportes_asistencia');
         return view('admin.reportes-asistencia.read', compact('reporte'));
     }
 
     /* ----------  CREAR  ---------- */
     public function create()
     {
-        $this->authorize('create', ReporteAsistencia::class);
+        // $this->authorize('add_reportes_asistencia');
         $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
-        return view('admin.reportes-asistencia.create', compact('empresas'));
+        return view('admin.reportes-asistencia.edit-add', compact('empresas'));
     }
 
     public function store(StoreReporteAsistenciaRequest $request)
     {
+        // $this->authorize('add_reportes_asistencia');
         $data = $request->validated();
         $data['nombre_reporte'] = $this->nombreReporte($data);
         $data['filtros']        = $request->only(['tipo']);
@@ -71,7 +72,7 @@ class ReporteAsistenciaController extends Controller
     /* ----------  DESCARGA DIRECTA  ---------- */
     public function download(ReporteAsistencia $reporte)
     {
-        $this->authorize('view', $reporte);
+        // $this->authorize('read_reportes_asistencia');
 
         if ($reporte->estado !== 'completado' || ! $reporte->archivo_path) {
             return redirect()->back()->with(['message' => 'El archivo aún no está disponible.', 'alert-type' => 'warning']);
@@ -83,7 +84,7 @@ class ReporteAsistenciaController extends Controller
     /* ----------  ELIMINAR  ---------- */
     public function destroy(ReporteAsistencia $reporte)
     {
-        $this->authorize('delete', $reporte);
+        // $this->authorize('delete_reportes_asistencia');
 
         if ($reporte->archivo_path) {
             Storage::delete($reporte->archivo_path);

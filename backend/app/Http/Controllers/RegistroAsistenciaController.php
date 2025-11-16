@@ -7,6 +7,7 @@ use App\Models\Empleado;
 use App\Models\Dispositivo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class RegistroAsistenciaController extends Controller
@@ -60,24 +61,9 @@ class RegistroAsistenciaController extends Controller
     public function store(Request $request)
     {
         // $this->authorize('create', RegistroAsistencia::class);
-        $validated = $request->validate([
-            'empleado_id' => 'required|exists:empleados,id',
-            'dispositivo_id' => 'required|exists:dispositivos,id',
-            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
-            'fecha_local' => 'required|date',
-            'hora_local' => 'required|date_format:H:i:s',
-            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
-            'precision_ubicacion' => 'nullable|numeric',
-            'confianza_verificacion' => 'nullable|numeric',
-            'observaciones' => 'nullable|string',
-        ]);
+        $data = $this->validateAndPrepareData($request);
 
-        // Combinar fecha y hora en un solo campo 'fecha_hora'
-        $validated['fecha_hora'] = $validated['fecha_local'] . ' ' . $validated['hora_local'];
-
-        RegistroAsistencia::create($validated);
+        RegistroAsistencia::create($data);
 
         return redirect()->route('admin.registros-asistencia.index')
             ->with(['message' => 'Registro de asistencia creado exitosamente.', 'alert-type' => 'success']);
@@ -99,24 +85,9 @@ class RegistroAsistenciaController extends Controller
     public function update(Request $request, RegistroAsistencia $registro)
     {
         // $this->authorize('update', $registro);
-        $validated = $request->validate([
-            'empleado_id' => 'required|exists:empleados,id',
-            'dispositivo_id' => 'required|exists:dispositivos,id',
-            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
-            'fecha_local' => 'required|date',
-            'hora_local' => 'required|date_format:H:i:s',
-            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
-            'latitud' => 'nullable|numeric',
-            'longitud' => 'nullable|numeric',
-            'precision_ubicacion' => 'nullable|numeric',
-            'confianza_verificacion' => 'nullable|numeric',
-            'observaciones' => 'nullable|string',
-        ]);
+        $data = $this->validateAndPrepareData($request);
 
-        // Combinar fecha y hora en un solo campo 'fecha_hora'
-        $validated['fecha_hora'] = $validated['fecha_local'] . ' ' . $validated['hora_local'];
-
-        $registro->update($validated);
+        $registro->update($data);
 
         return redirect()->route('admin.registros-asistencia.index')
             ->with(['message' => 'Registro de asistencia actualizado exitosamente.', 'alert-type' => 'success']);
@@ -134,5 +105,30 @@ class RegistroAsistenciaController extends Controller
             return redirect()->route('admin.registros-asistencia.index')
                 ->with(['message' => 'Error al eliminar el registro de asistencia.', 'alert-type' => 'error']);
         }
+    }
+
+    /**
+     * Valida y prepara los datos del request.
+     */
+    private function validateAndPrepareData(Request $request): array
+    {
+        $validated = $request->validate([
+            'empleado_id' => 'required|exists:empleados,id',
+            'dispositivo_id' => 'required|exists:dispositivos,id',
+            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
+            'fecha_local' => 'required|date',
+            'hora_local' => 'required|date_format:H:i:s',
+            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
+            'latitud' => 'nullable|numeric|between:-90,90',
+            'longitud' => 'nullable|numeric|between:-180,180',
+            'precision_ubicacion' => 'nullable|numeric',
+            'confianza_verificacion' => 'nullable|numeric',
+            'observaciones' => 'nullable|string',
+        ]);
+
+        // Combinar fecha y hora en un solo campo 'fecha_hora' usando Carbon para más seguridad
+        $validated['fecha_hora'] = Carbon::parse($validated['fecha_local'] . ' ' . $validated['hora_local'])->toDateTimeString();
+
+        return $validated;
     }
 }

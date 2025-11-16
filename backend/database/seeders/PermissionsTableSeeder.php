@@ -176,5 +176,100 @@ class PermissionsTableSeeder extends Seeder
                 'tableDescription'=> 'Reportes de Asistencia'
             ]);
         }
+
+        // Empleados
+        $permissionsEmpleado = [
+            'browse_empleados' => 'Ver lista de empleados',
+            'read_empleados'   => 'Ver detalles de un empleado',
+            'edit_empleados'   => 'Editar información de empleados',
+            'add_empleados'    => 'Agregar nuevos empleados',
+            'delete_empleados' => 'Eliminar empleados',
+        ];
+
+        foreach ($permissionsEmpleado as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'empleados',
+                'tableDescription'=> 'Empleados'
+            ]);
+        }
+
+        // Dispositivos
+        $permissionsDispositivo = [
+            'browse_dispositivos' => 'Ver lista de dispositivos',
+            'read_dispositivos'   => 'Ver detalles de un dispositivo',
+            'edit_dispositivos'   => 'Editar información de dispositivos',
+            'add_dispositivos'    => 'Agregar nuevos dispositivos',
+            'delete_dispositivos' => 'Eliminar dispositivos',
+        ];
+
+        foreach ($permissionsDispositivo as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'dispositivos',
+                'tableDescription'=> 'Dispositivos Biométricos'
+            ]);
+        }
+
+        // Mapeo Dispositivo-Empleado
+        $permissionsMapeo = [
+            'browse_dispositivo_empleado' => 'Ver lista de mapeos',
+            'read_dispositivo_empleado'   => 'Ver detalles de un mapeo',
+            'edit_dispositivo_empleado'   => 'Editar mapeos',
+            'add_dispositivo_empleado'    => 'Agregar nuevos mapeos',
+            'delete_dispositivo_empleado' => 'Eliminar mapeos',
+        ];
+
+        foreach ($permissionsMapeo as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'dispositivo_empleado',
+                'tableDescription'=> 'Mapeo Dispositivo-Empleado'
+            ]);
+        }
+
+        // Registros de Asistencia
+        $permissionsRegistro = [
+            'browse_registros_asistencia' => 'Ver lista de registros de asistencia',
+            'read_registros_asistencia'   => 'Ver detalles de un registro',
+            'edit_registros_asistencia'   => 'Editar registros de asistencia',
+            'add_registros_asistencia'    => 'Agregar nuevos registros manualmente',
+            'delete_registros_asistencia' => 'Eliminar registros de asistencia',
+        ];
+
+        foreach ($permissionsRegistro as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'registros_asistencia',
+                'tableDescription'=> 'Registros de Asistencia'
+            ]);
+        }
+
+        // Tipos de Incidencia
+        $permissionsTipoIncidencia = [
+            'browse_tipos_incidencia' => 'Ver lista de tipos de incidencia',
+            'read_tipos_incidencia'   => 'Ver detalles de un tipo de incidencia',
+            'edit_tipos_incidencia'   => 'Editar tipos de incidencia',
+            'add_tipos_incidencia'    => 'Agregar nuevos tipos de incidencia',
+            'delete_tipos_incidencia' => 'Eliminar tipos de incidencia',
+        ];
+
+        foreach ($permissionsTipoIncidencia as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'tipos_incidencia',
+                'tableDescription'=> 'Tipos de Incidencia'
+            ]);
+        }
+
+        // Incidencias
+        Permission::generateFor('incidencias');
+
+
     }
 }

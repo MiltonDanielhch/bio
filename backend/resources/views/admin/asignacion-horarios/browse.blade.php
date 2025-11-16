@@ -142,11 +142,11 @@
 
     function deleteItem(url, nombre) {
         $('#delete_form').attr('action', url);
-        $('.modal-title').html('<i class="voyager-trash"></i> ¿Eliminar el reporte "<strong>' + nombre + '</strong>"?');
+        $('.modal-title').html('<i class="voyager-trash"></i> ¿Eliminar la empresa "<strong>' + nombre + '</strong>"?');
     }
 
     function list(page = 1) {
-        let url = '{{ url("admin/reportes-asistencia/ajax/list") }}';
+        let url = '{{ url("admin/empresas/ajax/list") }}';
         let search = $('#input-search').val()?.trim() || '';
 
         $('#div-results').html(`
@@ -174,3 +174,5 @@
     }
 </script>
 @endpush
+
+

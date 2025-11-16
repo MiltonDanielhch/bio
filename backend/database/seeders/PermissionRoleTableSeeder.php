@@ -16,7 +16,7 @@ class PermissionRoleTableSeeder extends Seeder
     public function run()
     {
         \DB::table('permission_role')->delete();
-        
+
         // Root
         $role = Role::where('name', 'admin')->firstOrFail();
         $permissions = Permission::all();
@@ -24,17 +24,60 @@ class PermissionRoleTableSeeder extends Seeder
 
 
 
+        // Administrador
         $role = Role::where('name', 'administrador')->firstOrFail();
-        $permissions = Permission::whereRaw('table_name = "admin" or
-                                            `key` = "add_egressdonor" or
+        $adminPermissions = Permission::whereIn('table_name', [
+            'admin',
+            'menus',
+            'roles',
+            'users',
+            'settings',
+            "people",
+            // Módulos de Asistencia
+            'empresas',
+            'sucursales',
+            'departamentos',
+            'empleados',
+            'horarios',
+            'asignacion_horarios',
+            'dispositivos',
+            'dispositivo_empleado',
+            'registros_asistencia',
+            'tipos_incidencia',
+            'incidencias',
+            'reportes_asistencia',
+        ])->pluck('id');
 
+        // Añadir permisos específicos por 'key' que no tienen 'table_name'
+        $specificAdminPermissions = Permission::whereIn('key', ['browse_clear-cache'])->pluck('id');
+        $allAdminPermissions = $adminPermissions->merge($specificAdminPermissions);
 
-                                            table_name = "people" or
-                                            table_name = "roles" or
-                                            table_name = "users" or
-                                            table_name = "settings" or
-                                            
-                                            `key` = "browse_clear-cache"')->get();
-        $role->permissions()->sync($permissions->pluck('id')->all());
+        $role->permissions()->sync($allAdminPermissions);
+
+        // Técnico
+        $role = Role::where('name', 'tecnico')->firstOrFail();
+        $tecnicoPermissions = Permission::whereIn('table_name', [
+            'admin', // Acceso básico al panel
+            // Módulos de Asistencia
+            'empresas',
+            'sucursales',
+            'departamentos',
+            'empleados',
+            'horarios',
+            'asignacion_horarios',
+            'dispositivos',
+            'dispositivo_empleado',
+            'registros_asistencia',
+            'tipos_incidencia',
+            'incidencias',
+            'reportes_asistencia',
+            'people',
+        ])->pluck('id');
+
+        // Añadir permiso para limpiar caché
+        $specificTecnicoPermissions = Permission::where('key', 'browse_clear-cache')->pluck('id');
+        $allTecnicoPermissions = $tecnicoPermissions->merge($specificTecnicoPermissions);
+
+        $role->permissions()->sync($allTecnicoPermissions);
     }
 }
