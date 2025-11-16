@@ -8,9 +8,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AsignacionHorarioController;
 use App\Http\Controllers\DepartamentoController;
+use App\Http\Controllers\EmpleadoController;
 use App\Http\Controllers\Admin\DispositivoController; // Importa el nuevo controlador
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\HorarioController;
+use App\Http\Controllers\RegistroAsistenciaController;
 use App\Http\Controllers\ReporteAsistenciaController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SucursalController;
@@ -101,6 +103,29 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
         Route::get('/{reporte}/download', [ReporteAsistenciaController::class, 'download'])->name('admin.reportes-asistencia.download');
     });
 
+    // ──────────────── REGISTRO ASISTENCIA ────────────────
+    Route::prefix('registros-asistencia')->group(function () {
+        Route::get('/', [RegistroAsistenciaController::class, 'index'])->name('admin.registros-asistencia.index');
+        Route::get('/ajax/list', [RegistroAsistenciaController::class, 'list'])->name('admin.registros-asistencia.ajax.list');
+        Route::get('/create', [RegistroAsistenciaController::class, 'create'])->name('admin.registros-asistencia.create');
+        Route::post('/', [RegistroAsistenciaController::class, 'store'])->name('admin.registros-asistencia.store');
+        Route::get('/{registro}/edit', [RegistroAsistenciaController::class, 'edit'])->name('admin.registros-asistencia.edit');
+        Route::put('/{registro}', [RegistroAsistenciaController::class, 'update'])->name('admin.registros-asistencia.update');
+        Route::delete('/{registro}', [RegistroAsistenciaController::class, 'destroy'])->name('admin.registros-asistencia.destroy');
+    });
+
+    // ──────────────── EMPLEADOS ────────────────
+    Route::prefix('empleados')->group(function () {
+        Route::get('/', [EmpleadoController::class, 'index'])->name('admin.empleados.index');
+        Route::get('/ajax/list', [EmpleadoController::class, 'list'])->name('admin.empleados.ajax.list');
+        Route::get('/create', [EmpleadoController::class, 'create'])->name('admin.empleados.create');
+        Route::post('/', [EmpleadoController::class, 'store'])->name('admin.empleados.store');
+        Route::get('/{empleado}/edit', [EmpleadoController::class, 'edit'])->name('admin.empleados.edit');
+        Route::put('/{empleado}', [EmpleadoController::class, 'update'])->name('admin.empleados.update');
+        Route::delete('/{empleado}', [EmpleadoController::class, 'destroy'])->name('admin.empleados.destroy');
+        // Route::get('/{empleado}', [EmpleadoController::class, 'show'])->name('admin.empleados.show');
+    });
+
     // ──────────────── DISPOSITIVOS ────────────────
     Route::prefix('dispositivos')->group(function () {
         Route::get('/', [DispositivoController::class, 'index'])->name('admin.dispositivos.index');
@@ -115,6 +140,18 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
         Route::post('/{dispositivo}/test-connection', [DispositivoController::class, 'testConnection'])->name('admin.dispositivos.test_connection');
         Route::post('/{dispositivo}/sync-now', [DispositivoController::class, 'syncNow'])->name('admin.dispositivos.sync_now');
     });
+
+    // ──────────────── MAPEO DISPOSITIVO <-> EMPLEADO ────────────────
+    Route::prefix('dispositivo-empleado')->as('admin.dispositivo-empleado.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'index'])->name('index');
+        Route::get('/ajax/list', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'list'])->name('ajax.list');
+        Route::get('/create', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'store'])->name('store');
+        Route::get('/{map}/edit', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'edit'])->name('edit');
+        Route::put('/{map}', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'update'])->name('update');
+        Route::delete('/{map}', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'destroy'])->name('destroy');
+    });
+
 
     // ──────────────── PERSONAS ────────────────
     Route::prefix('people')->group(function () {

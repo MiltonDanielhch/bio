@@ -40,6 +40,15 @@ class Empleado extends Model
         'estado'             => 'string' // o 'string'
     ];
 
+    /* -----------------------------------------------------------------
+     |  Accessors & Mutators
+     | -----------------------------------------------------------------*/
+    public function getFullNameAttribute()
+    {
+        return trim($this->nombres . ' ' . $this->apellidos);
+    }
+
+
     /* ---------------- relaciones ---------------- */
     public function empresa()
     {

@@ -32,7 +32,7 @@ class DispositivoEmpleado extends Model
     /* ---------------- relaciones ---------------- */
     public function empleado()
     {
-        return $this->belongsTo(Empleado::class);
+        return $this->belongsTo(Empleado::class, 'empleado_id');
     }
 
     public function dispositivo()

@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RegistroAsistencia;
+use App\Models\Empleado;
+use App\Models\Dispositivo;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+
+class RegistroAsistenciaController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function index()
+    {
+        // $this->authorize('viewAny', RegistroAsistencia::class);
+        return view('admin.registros_asistencia.browse');
+    }
+
+    public function list(Request $request)
+    {
+        // $this->authorize('viewAny', RegistroAsistencia::class);
+        $search = $request->get('search', '');
+        $paginate = $request->get('paginate', 10);
+
+        $registros = RegistroAsistencia::with(['empleado', 'dispositivo'])
+            ->when($search, function ($query) use ($search) {
+                $query->whereHas('empleado', function ($q) use ($search) {
+                    $q->where('nombres', 'like', "%$search%")
+                        ->orWhere('apellidos', 'like', "%$search%")
+                        ->orWhere('codigo_empleado', 'like', "%$search%");
+                })
+                ->orWhereHas('dispositivo', function ($q) use ($search) {
+                    $q->where('nombre_dispositivo', 'like', "%$search%");
+                });
+            })
+            ->orderBy('fecha_hora', 'desc')
+            ->paginate($paginate);
+
+        return view('admin.registros_asistencia.list', compact('registros'));
+    }
+
+    public function create()
+    {
+        // $this->authorize('create', RegistroAsistencia::class);
+        $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
+        $dispositivos = Dispositivo::where('estado', 'activo')->orderBy('nombre_dispositivo')->get();
+        return view('admin.registros_asistencia.edit-add', [
+            'registro' => new RegistroAsistencia(),
+            'empleados' => $empleados,
+            'dispositivos' => $dispositivos,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        // $this->authorize('create', RegistroAsistencia::class);
+        $validated = $request->validate([
+            'empleado_id' => 'required|exists:empleados,id',
+            'dispositivo_id' => 'required|exists:dispositivos,id',
+            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
+            'fecha_local' => 'required|date',
+            'hora_local' => 'required|date_format:H:i:s',
+            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
+            'latitud' => 'nullable|numeric',
+            'longitud' => 'nullable|numeric',
+            'precision_ubicacion' => 'nullable|numeric',
+            'confianza_verificacion' => 'nullable|numeric',
+            'observaciones' => 'nullable|string',
+        ]);
+
+        // Combinar fecha y hora en un solo campo 'fecha_hora'
+        $validated['fecha_hora'] = $validated['fecha_local'] . ' ' . $validated['hora_local'];
+
+        RegistroAsistencia::create($validated);
+
+        return redirect()->route('admin.registros-asistencia.index')
+            ->with(['message' => 'Registro de asistencia creado exitosamente.', 'alert-type' => 'success']);
+    }
+
+    public function edit(RegistroAsistencia $registro)
+    {
+        // $this->authorize('update', $registro);
+        $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
+        $dispositivos = Dispositivo::where('estado', 'activo')->orderBy('nombre_dispositivo')->get();
+
+        return view('admin.registros_asistencia.edit-add', [
+            'registro' => $registro,
+            'empleados' => $empleados,
+            'dispositivos' => $dispositivos,
+        ]);
+    }
+
+    public function update(Request $request, RegistroAsistencia $registro)
+    {
+        // $this->authorize('update', $registro);
+        $validated = $request->validate([
+            'empleado_id' => 'required|exists:empleados,id',
+            'dispositivo_id' => 'required|exists:dispositivos,id',
+            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
+            'fecha_local' => 'required|date',
+            'hora_local' => 'required|date_format:H:i:s',
+            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
+            'latitud' => 'nullable|numeric',
+            'longitud' => 'nullable|numeric',
+            'precision_ubicacion' => 'nullable|numeric',
+            'confianza_verificacion' => 'nullable|numeric',
+            'observaciones' => 'nullable|string',
+        ]);
+
+        // Combinar fecha y hora en un solo campo 'fecha_hora'
+        $validated['fecha_hora'] = $validated['fecha_local'] . ' ' . $validated['hora_local'];
+
+        $registro->update($validated);
+
+        return redirect()->route('admin.registros-asistencia.index')
+            ->with(['message' => 'Registro de asistencia actualizado exitosamente.', 'alert-type' => 'success']);
+    }
+
+    public function destroy(RegistroAsistencia $registro)
+    {
+        // $this->authorize('delete', $registro);
+        try {
+            $registro->delete();
+            return redirect()->route('admin.registros-asistencia.index')
+                ->with(['message' => 'Registro de asistencia eliminado exitosamente.', 'alert-type' => 'success']);
+        } catch (\Exception $e) {
+            Log::error("Error al eliminar registro de asistencia {$registro->id}: " . $e->getMessage());
+            return redirect()->route('admin.registros-asistencia.index')
+                ->with(['message' => 'Error al eliminar el registro de asistencia.', 'alert-type' => 'error']);
+        }
+    }
+}
