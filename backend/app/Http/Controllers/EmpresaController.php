@@ -5,45 +5,40 @@ namespace App\Http\Controllers;
 use App\Models\Empresa;
 use App\Http\Requests\StoreEmpresaRequest;
 use App\Http\Requests\UpdateEmpresaRequest;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class EmpresaController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Empresa::class;
+    protected $browseView = 'admin.empresas.browse';
+    protected $listView = 'admin.empresas.list';
+    protected $with = ['creador'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        $this->authorize('viewAny', Empresa::class);
-        return view('admin.empresas.browse');
-    }
-
-    public function list(\Illuminate\Http\Request $request)
-    {
-        $this->authorize('viewAny', Empresa::class);
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $empresas = Empresa::with('creador')
-            ->when($search, fn($q) => $q->where('nombre_empresa', 'like', "%$search%")->orWhere('ruc', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.empresas.list', compact('empresas'));
+        return $query->when($search, fn($q) => $q->where('nombre_empresa', 'like', "%$search%")
+            ->orWhere('ruc', 'like', "%$search%"));
     }
 
     public function show(Empresa $empresa)
     {
-        $this->authorize('view', $empresa);
+        $this->authorize('view', $empresa); // Descomentado
         return view('admin.empresas.read', compact('empresa'));
     }
 
     public function create()
     {
-        $this->authorize('create', Empresa::class);
+        $this->authorize('create', Empresa::class); // Descomentado
         return view('admin.empresas.edit-add', ['empresa' => new Empresa()]);
     }
 
@@ -62,7 +57,7 @@ class EmpresaController extends Controller
 
     public function edit(Empresa $empresa)
     {
-        $this->authorize('update', $empresa);
+        $this->authorize('update', $empresa); // Descomentado
         return view('admin.empresas.edit-add', compact('empresa'));
     }
 
@@ -81,7 +76,7 @@ class EmpresaController extends Controller
 
     public function destroy(Empresa $empresa)
     {
-        $this->authorize('delete', $empresa);
+        $this->authorize('delete', $empresa); // Descomentado
         try {
             if ($empresa->logo) Storage::disk('public')->delete($empresa->logo);
             $empresa->delete();

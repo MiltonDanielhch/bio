@@ -12,7 +12,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($reportes as $reporte)
+                @forelse($items as $reporte)
                 <tr>
                     <td>{{ $reporte->id }}</td>
                     <td>
@@ -34,25 +34,25 @@
                         <span class="label label-{{ $labelClass }}">{{ ucfirst($reporte->estado) }}</span>
                     </td>
                     <td class="text-right" style="width: 25%">
-                        @can('read_reportes_asistencia')
+                        @can('view', $reporte)
                             <a href="{{ route('admin.reportes-asistencia.show', $reporte) }}" title="Ver" class="btn btn-sm btn-info">
                                 <i class="voyager-eye"></i> Ver
                             </a>
                         @endcan
 
                         @if($reporte->estado == 'completado')
-                            @can('read_reportes_asistencia')
+                            @can('view', $reporte)
                                 <a href="{{ route('admin.reportes-asistencia.download', $reporte) }}" title="Descargar" class="btn btn-sm btn-success">
                                     <i class="voyager-download"></i> Descargar
                                 </a>
                             @endcan
                         @endif
 
-                        @can('delete_reportes_asistencia')
+                        @can('delete', $reporte)
                             <button type="button"
                                     class="btn btn-sm btn-danger"
                                     title="Borrar"
-                                    onclick="deleteItem('{{ route('admin.reportes-asistencia.destroy', $reporte) }}')"
+                                    onclick="deleteItem('{{ route('admin.reportes-asistencia.destroy', $reporte) }}', '{{ $reporte->nombre_reporte }}')"
                                     data-toggle="modal"
                                     data-target="#delete_modal">
                                 <i class="voyager-trash"></i> Borrar
@@ -78,14 +78,13 @@
 
 <div class="col-md-12">
     <div class="col-md-4 text-muted">
-        @if($reportes->count())
-            Mostrando del {{ $reportes->firstItem() }} al {{ $reportes->lastItem() }} de {{ $reportes->total() }} registros.
+        @if($items->count())
+            Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.
         @endif
     </div>
     <div class="col-md-8 text-right">
-        <nav class="text-right">{{ $reportes->links() }}</nav>
+        <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
 
 @include('admin.partials.list-pagination-script')
-

@@ -13,7 +13,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($incidencias as $incidencia)
+                @forelse($items as $incidencia)
                 <tr>
                     <td>{{ $incidencia->id }}</td>
                     <td>
@@ -32,16 +32,16 @@
                         <span class="label label-{{ $labelClass }}">{{ ucfirst($incidencia->estado) }}</span>
                     </td>
                     <td class="text-right" style="width: 20%">
-                        @can('edit_incidencias')
+                        @can('update', $incidencia)
                             <a href="{{ route('admin.incidencias.edit', $incidencia) }}" title="Editar" class="btn btn-sm btn-primary">
                                 <i class="voyager-edit"></i> Editar
                             </a>
                         @endcan
-                        @can('delete_incidencias')
+                        @can('delete', $incidencia)
                             <button type="button"
                                     class="btn btn-sm btn-danger"
                                     title="Borrar"
-                                    onclick="deleteItem('{{ route('admin.incidencias.destroy', $incidencia) }}')"
+                                    onclick="deleteItem('{{ route('admin.incidencias.destroy', $incidencia) }}', 'Incidencia #{{ $incidencia->id }}')"
                                     data-toggle="modal"
                                     data-target="#delete_modal">
                                 <i class="voyager-trash"></i> Borrar
@@ -67,14 +67,13 @@
 
 <div class="col-md-12">
     <div class="col-md-4 text-muted">
-        @if($incidencias->count())
-            Mostrando del {{ $incidencias->firstItem() }} al {{ $incidencias->lastItem() }} de {{ $incidencias->total() }} registros.
+        @if($items->count())
+            Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.
         @endif
     </div>
     <div class="col-md-8 text-right">
-        <nav class="text-right">{{ $incidencias->links() }}</nav>
+        <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
 
 @include('admin.partials.list-pagination-script')
-

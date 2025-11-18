@@ -10,22 +10,22 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($tipos as $tipo)
+                @forelse($items as $tipo)
                 <tr>
                     <td>{{ $tipo->id }}</td>
                     <td>{{ $tipo->nombre }}</td>
                     <td>{{ Str::limit($tipo->descripcion, 80) }}</td>
                     <td class="text-right" style="width: 20%">
-                        @can('edit_tipos_incidencia')
+                        @can('update', $tipo)
                             <a href="{{ route('admin.tipos-incidencia.edit', $tipo) }}" title="Editar" class="btn btn-sm btn-primary">
                                 <i class="voyager-edit"></i> Editar
                             </a>
                         @endcan
-                        @can('delete_tipos_incidencia')
+                        @can('delete', $tipo)
                             <button type="button"
                                     class="btn btn-sm btn-danger"
                                     title="Borrar"
-                                    onclick="deleteItem('{{ route('admin.tipos-incidencia.destroy', $tipo) }}')"
+                                    onclick="deleteItem('{{ route('admin.tipos-incidencia.destroy', $tipo) }}', '{{ $tipo->nombre }}')"
                                     data-toggle="modal"
                                     data-target="#delete_modal">
                                 <i class="voyager-trash"></i> Borrar
@@ -51,14 +51,13 @@
 
 <div class="col-md-12">
     <div class="col-md-4 text-muted">
-        @if($tipos->count())
-            Mostrando del {{ $tipos->firstItem() }} al {{ $tipos->lastItem() }} de {{ $tipos->total() }} registros.
+        @if($items->count())
+            Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.
         @endif
     </div>
     <div class="col-md-8 text-right">
-        <nav class="text-right">{{ $tipos->links() }}</nav>
+        <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
 
 @include('admin.partials.list-pagination-script')
-

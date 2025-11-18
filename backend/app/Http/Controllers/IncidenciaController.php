@@ -5,45 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\Incidencia;
 use App\Models\Empleado;
 use App\Models\TipoIncidencia;
+use App\Traits\ManagesCrud;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class IncidenciaController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Incidencia::class;
+    protected $browseView = 'admin.incidencias.browse';
+    protected $listView = 'admin.incidencias.list';
+    protected $with = ['empleado', 'tipoIncidencia', 'aprobador'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('browse_incidencias');
-        return view('admin.incidencias.browse');
-    }
-
-    public function list(Request $request)
-    {
-        // $this->authorize('browse_incidencias');
-        $search = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $incidencias = Incidencia::with(['empleado', 'tipoIncidencia', 'aprobador'])
-            ->when($search, function ($query) use ($search) {
-                $query->whereHas('empleado', function ($q) use ($search) {
-                    $q->where('nombres', 'like', "%$search%")
-                      ->orWhere('apellidos', 'like', "%$search%");
-                })->orWhere('motivo', 'like', "%$search%");
-            })
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.incidencias.list', compact('incidencias'));
+        return $query->whereHas('empleado', function ($q) use ($search) {
+            $q->where('nombres', 'like', "%$search%")
+              ->orWhere('apellidos', 'like', "%$search%");
+        })->orWhere('motivo', 'like', "%$search%");
     }
 
     public function create()
     {
-        // $this->authorize('add_incidencias');
+        $this->authorize('create', Incidencia::class);
         $empleados = Empleado::where('estado', 'activo')->orderBy('apellidos')->get();
         $tipos = TipoIncidencia::orderBy('nombre')->get();
         return view('admin.incidencias.edit-add', [
@@ -55,7 +47,7 @@ class IncidenciaController extends Controller
 
     public function store(Request $request)
     {
-        // $this->authorize('add_incidencias');
+        $this->authorize('create', Incidencia::class);
         $data = $this->validateRequest($request);
         $data['creado_por'] = auth()->id();
         $data['estado'] = 'pendiente'; // Siempre se crea como pendiente
@@ -68,7 +60,7 @@ class IncidenciaController extends Controller
 
     public function edit(Incidencia $incidencia)
     {
-        // $this->authorize('edit_incidencias');
+        $this->authorize('update', $incidencia);
         $empleados = Empleado::where('estado', 'activo')->orderBy('apellidos')->get();
         $tipos = TipoIncidencia::orderBy('nombre')->get();
         return view('admin.incidencias.edit-add', compact('incidencia', 'empleados', 'tipos'));
@@ -76,7 +68,7 @@ class IncidenciaController extends Controller
 
     public function update(Request $request, Incidencia $incidencia)
     {
-        // $this->authorize('edit_incidencias');
+        $this->authorize('update', $incidencia);
         $data = $this->validateRequest($request, $incidencia->id);
 
         // Lógica para aprobación/rechazo
@@ -93,7 +85,7 @@ class IncidenciaController extends Controller
 
     public function destroy(Incidencia $incidencia)
     {
-        // $this->authorize('delete_incidencias');
+        $this->authorize('delete', $incidencia);
         $incidencia->delete();
         return redirect()->route('admin.incidencias.index')
             ->with(['message' => 'Incidencia eliminada exitosamente.', 'alert-type' => 'success']);
@@ -113,4 +105,3 @@ class IncidenciaController extends Controller
         ]);
     }
 }
-

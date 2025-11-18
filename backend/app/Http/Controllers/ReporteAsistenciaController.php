@@ -6,54 +6,47 @@ use App\Models\ReporteAsistencia;
 use App\Models\Empresa;
 use App\Http\Requests\StoreReporteAsistenciaRequest;
 use App\Jobs\GenerarReporteJob;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 
 class ReporteAsistenciaController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = ReporteAsistencia::class;
+    protected $browseView = 'admin.reportes-asistencia.browse';
+    protected $listView = 'admin.reportes-asistencia.list';
+    protected $with = ['empresa', 'generador'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    /* ----------  LISTADO  ---------- */
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('browse_reportes_asistencia');
-        return view('admin.reportes-asistencia.browse');
-    }
-
-    public function list(\Illuminate\Http\Request $request)
-    {
-        // $this->authorize('browse_reportes_asistencia');
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $reportes = ReporteAsistencia::with(['empresa', 'generador'])
-            ->when($search, fn($q) => $q->where('nombre_reporte', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.reportes-asistencia.list', compact('reportes'));
+        return $query->when($search, fn($q) => $q->where('nombre_reporte', 'like', "%$search%"));
     }
 
     /* ----------  VER  ---------- */
     public function show(ReporteAsistencia $reporte)
     {
-        // $this->authorize('read_reportes_asistencia');
+        $this->authorize('view', $reporte);
         return view('admin.reportes-asistencia.read', compact('reporte'));
     }
 
     /* ----------  CREAR  ---------- */
     public function create()
     {
-        // $this->authorize('add_reportes_asistencia');
+        $this->authorize('create', ReporteAsistencia::class);
         $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
         return view('admin.reportes-asistencia.edit-add', compact('empresas'));
     }
 
     public function store(StoreReporteAsistenciaRequest $request)
     {
-        // $this->authorize('add_reportes_asistencia');
+        $this->authorize('create', ReporteAsistencia::class);
         $data = $request->validated();
         $data['nombre_reporte'] = $this->nombreReporte($data);
         $data['filtros']        = $request->only(['tipo']);
@@ -72,7 +65,7 @@ class ReporteAsistenciaController extends Controller
     /* ----------  DESCARGA DIRECTA  ---------- */
     public function download(ReporteAsistencia $reporte)
     {
-        // $this->authorize('read_reportes_asistencia');
+        $this->authorize('view', $reporte);
 
         if ($reporte->estado !== 'completado' || ! $reporte->archivo_path) {
             return redirect()->back()->with(['message' => 'El archivo aún no está disponible.', 'alert-type' => 'warning']);
@@ -84,7 +77,7 @@ class ReporteAsistenciaController extends Controller
     /* ----------  ELIMINAR  ---------- */
     public function destroy(ReporteAsistencia $reporte)
     {
-        // $this->authorize('delete_reportes_asistencia');
+        $this->authorize('delete', $reporte);
 
         if ($reporte->archivo_path) {
             Storage::delete($reporte->archivo_path);

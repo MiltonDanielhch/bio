@@ -5,50 +5,45 @@ namespace App\Http\Controllers;
 use App\Models\RegistroAsistencia;
 use App\Models\Empleado;
 use App\Models\Dispositivo;
+use App\Traits\ManagesCrud;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 
 class RegistroAsistenciaController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = RegistroAsistencia::class;
+    protected $browseView = 'admin.registros_asistencia.browse';
+    protected $listView = 'admin.registros_asistencia.list';
+    protected $with = ['empleado', 'dispositivo'];
+    protected $orderBy = ['fecha_hora', 'desc'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('viewAny', RegistroAsistencia::class);
-        return view('admin.registros_asistencia.browse');
-    }
-
-    public function list(Request $request)
-    {
-        // $this->authorize('viewAny', RegistroAsistencia::class);
-        $search = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $registros = RegistroAsistencia::with(['empleado', 'dispositivo'])
-            ->when($search, function ($query) use ($search) {
-                $query->whereHas('empleado', function ($q) use ($search) {
-                    $q->where('nombres', 'like', "%$search%")
-                        ->orWhere('apellidos', 'like', "%$search%")
-                        ->orWhere('codigo_empleado', 'like', "%$search%");
-                })
+        return $query->when($search, function ($query) use ($search) {
+            $query->whereHas('empleado', function ($q) use ($search) {
+                $q->where('nombres', 'like', "%$search%")
+                    ->orWhere('apellidos', 'like', "%$search%")
+                    ->orWhere('codigo_empleado', 'like', "%$search%");
+            })
                 ->orWhereHas('dispositivo', function ($q) use ($search) {
                     $q->where('nombre_dispositivo', 'like', "%$search%");
                 });
-            })
-            ->orderBy('fecha_hora', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.registros_asistencia.list', compact('registros'));
+        });
     }
 
     public function create()
     {
-        // $this->authorize('create', RegistroAsistencia::class);
+        $this->authorize('create', RegistroAsistencia::class);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::where('estado', 'activo')->orderBy('nombre_dispositivo')->get();
         return view('admin.registros_asistencia.edit-add', [
@@ -60,7 +55,7 @@ class RegistroAsistenciaController extends Controller
 
     public function store(Request $request)
     {
-        // $this->authorize('create', RegistroAsistencia::class);
+        $this->authorize('create', RegistroAsistencia::class);
         $data = $this->validateAndPrepareData($request);
 
         RegistroAsistencia::create($data);
@@ -71,7 +66,7 @@ class RegistroAsistenciaController extends Controller
 
     public function edit(RegistroAsistencia $registro)
     {
-        // $this->authorize('update', $registro);
+        $this->authorize('update', $registro);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::where('estado', 'activo')->orderBy('nombre_dispositivo')->get();
 
@@ -84,7 +79,7 @@ class RegistroAsistenciaController extends Controller
 
     public function update(Request $request, RegistroAsistencia $registro)
     {
-        // $this->authorize('update', $registro);
+        $this->authorize('update', $registro);
         $data = $this->validateAndPrepareData($request);
 
         $registro->update($data);
@@ -95,7 +90,7 @@ class RegistroAsistenciaController extends Controller
 
     public function destroy(RegistroAsistencia $registro)
     {
-        // $this->authorize('delete', $registro);
+        $this->authorize('delete', $registro);
         try {
             $registro->delete();
             return redirect()->route('admin.registros-asistencia.index')

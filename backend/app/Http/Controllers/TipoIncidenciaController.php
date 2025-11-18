@@ -3,46 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoIncidencia;
+use App\Traits\ManagesCrud;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class TipoIncidenciaController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = TipoIncidencia::class;
+    protected $browseView = 'admin.tipos-incidencia.browse';
+    protected $listView = 'admin.tipos-incidencia.list';
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('browse_tipos_incidencia');
-        return view('admin.tipos-incidencia.browse');
-    }
-
-    public function list(Request $request)
-    {
-        // $this->authorize('browse_tipos_incidencia');
-        $search = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $tipos = TipoIncidencia::query()
-            ->when($search, fn($q) => $q->where('nombre', 'like', "%$search%")->orWhere('descripcion', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.tipos-incidencia.list', compact('tipos'));
+        return $query->when($search, fn($q) => $q->where('nombre', 'like', "%$search%")->orWhere('descripcion', 'like', "%$search%"));
     }
 
     public function create()
     {
-        // $this->authorize('add_tipos_incidencia');
+        $this->authorize('create', TipoIncidencia::class);
         return view('admin.tipos-incidencia.edit-add', ['tipo' => new TipoIncidencia()]);
     }
 
     public function store(Request $request)
     {
-        // $this->authorize('add_tipos_incidencia');
+        $this->authorize('create', TipoIncidencia::class);
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:191', Rule::unique('tipos_incidencia')],
             'descripcion' => 'nullable|string|max:65535',
@@ -56,13 +49,13 @@ class TipoIncidenciaController extends Controller
 
     public function edit(TipoIncidencia $tipo)
     {
-        // $this->authorize('edit_tipos_incidencia');
+        $this->authorize('update', $tipo);
         return view('admin.tipos-incidencia.edit-add', compact('tipo'));
     }
 
     public function update(Request $request, TipoIncidencia $tipo)
     {
-        // $this->authorize('edit_tipos_incidencia');
+        $this->authorize('update', $tipo);
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:191', Rule::unique('tipos_incidencia')->ignore($tipo->id)],
             'descripcion' => 'nullable|string|max:65535',
@@ -76,7 +69,7 @@ class TipoIncidenciaController extends Controller
 
     public function destroy(TipoIncidencia $tipo)
     {
-        // $this->authorize('delete_tipos_incidencia');
+        $this->authorize('delete', $tipo);
         try {
             $tipo->delete();
             return redirect()->route('admin.tipos-incidencia.index')

@@ -12,7 +12,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($empleados as $empleado)
+            @forelse ($items as $empleado)
                 <tr>
                     <td>{{ $empleado->id }}</td>
                     <td>
@@ -53,13 +53,13 @@
 
 <div class="col-md-12">
     <div class="col-md-6" style="overflow-x:auto">
-        @if(count($empleados) > 0)
-            <p class="text-muted">Mostrando del {{ $empleados->firstItem() }} al {{ $empleados->lastItem() }} de {{ $empleados->total() }} registros.</p>
+        @if($items->count() > 0)
+            <p class="text-muted">Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.</p>
         @endif
     </div>
     <div class="col-md-6">
         <nav class="pull-right">
-            {{ $empleados->links() }}
+            {{ $items->links() }}
         </nav>
     </div>
 </div>

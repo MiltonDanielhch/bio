@@ -12,7 +12,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($empresas as $e)
+                @forelse($items as $e)
                 <tr>
                     <td>{{ $e->id }}</td>
                     <td>{{ $e->nombre_empresa }}</td>
@@ -64,12 +64,12 @@
 
 <div class="col-md-12">
     <div class="col-md-4 text-muted">
-        @if($empresas->count())
-            Mostrando del {{ $empresas->firstItem() }} al {{ $empresas->lastItem() }} de {{ $empresas->total() }} registros.
+        @if($items->count())
+            Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.
         @endif
     </div>
     <div class="col-md-8 text-right">
-        <nav class="text-right">{{ $empresas->links() }}</nav>
+        <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
 

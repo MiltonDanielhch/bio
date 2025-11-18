@@ -14,7 +14,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($asignaciones as $a)
+                @forelse($items as $a)
                 <tr>
                     <td>{{ $a->id }}</td>
                     <td>{{ optional($a->empleado)->nombres }} {{ optional($a->empleado)->apellidos }}</td>
@@ -70,12 +70,12 @@
 
 <div class="col-md-12">
     <div class="col-md-4 text-muted">
-        @if($asignaciones->count())
-            Mostrando del {{ $asignaciones->firstItem() }} al {{ $asignaciones->lastItem() }} de {{ $asignaciones->total() }} registros.
+        @if($items->count())
+            Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.
         @endif
     </div>
     <div class="col-md-8 text-right">
-        <nav class="text-right">{{ $asignaciones->links() }}</nav>
+        <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
 

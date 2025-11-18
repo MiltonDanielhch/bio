@@ -7,43 +7,37 @@ use App\Models\Sucursal;
 use App\Models\Empleado;
 use App\Http\Requests\StoreDepartamentoRequest;
 use App\Http\Requests\UpdateDepartamentoRequest;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 
 class DepartamentoController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Departamento::class;
+    protected $browseView = 'admin.departamentos.browse';
+    protected $listView = 'admin.departamentos.list';
+    protected $with = ['sucursal.empresa', 'jefe'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        $this->authorize('viewAny', Departamento::class);
-        return view('admin.departamentos.browse');
-    }
-
-    public function list(\Illuminate\Http\Request $request)
-    {
-        $this->authorize('viewAny', Departamento::class);
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $departamentos = Departamento::with(['sucursal.empresa', 'jefe'])
-            ->when($search, fn($q) => $q->where('nombre_departamento', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.departamentos.list', compact('departamentos'));
+        return $query->when($search, fn($q) => $q->where('nombre_departamento', 'like', "%$search%"));
     }
 
     public function show(Departamento $departamento)
     {
-        $this->authorize('view', $departamento);
+        $this->authorize('view', $departamento); // Descomentado
         return view('admin.departamentos.read', compact('departamento'));
     }
 
     public function create()
     {
-        $this->authorize('create', Departamento::class);
+        $this->authorize('create', Departamento::class); // Descomentado
         $sucursales = Sucursal::with('empresa')->where('estado', 'activo')->get();
         $empleados  = Empleado::where('estado', 'activo')->get();
         $departamento = null;
@@ -52,6 +46,7 @@ class DepartamentoController extends Controller
 
     public function store(StoreDepartamentoRequest $request)
     {
+        $this->authorize('create', Departamento::class); // Añadido
         $data = $request->validated();
         $data['creado_por'] = auth()->id();
         Departamento::create($data);
@@ -62,7 +57,7 @@ class DepartamentoController extends Controller
 
     public function edit(Departamento $departamento)
     {
-        $this->authorize('update', $departamento);
+        $this->authorize('update', $departamento); // Descomentado
         $sucursales = Sucursal::with('empresa')->where('estado', 'activo')->get();
         $empleados  = Empleado::where('estado', 'activo')->get();
         return view('admin.departamentos.edit-add', compact('departamento', 'sucursales', 'empleados'));
@@ -70,6 +65,7 @@ class DepartamentoController extends Controller
 
     public function update(UpdateDepartamentoRequest $request, Departamento $departamento)
     {
+        $this->authorize('update', $departamento); // Añadido
         $departamento->update($request->validated());
         return redirect()->route('admin.departamentos.index')
             ->with(['message' => 'Departamento actualizado.', 'alert-type' => 'success']);
@@ -77,7 +73,7 @@ class DepartamentoController extends Controller
 
     public function destroy(Departamento $departamento)
     {
-        $this->authorize('delete', $departamento);
+        $this->authorize('delete', $departamento); // Descomentado
         $departamento->delete();
         return redirect()->route('admin.departamentos.index')
             ->with(['message' => 'Departamento eliminado.', 'alert-type' => 'success']);

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 use App\Models\Dispositivo;
 use App\Models\DispositivoEmpleado;
 use App\Models\Empleado; // Usar el modelo Empleado
@@ -12,35 +14,28 @@ use Illuminate\Validation\Rule;
 
 class DispositivoEmpleadoController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = DispositivoEmpleado::class;
+    protected $browseView = 'admin.dispositivo_empleado.browse';
+    protected $listView = 'admin.dispositivo_empleado.list';
+    protected $with = ['empleado', 'dispositivo'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        return view('admin.dispositivo_empleado.browse');
-    }
-
-    public function list(Request $request)
-    {
-        $search = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $mapeos = DispositivoEmpleado::with(['empleado', 'dispositivo'])
-            ->when($search, function ($query) use ($search) {
-                $query->where('zk_user_id', 'like', "%$search%")
-                    ->orWhereHas('empleado', fn($q) => $q->where('nombres', 'like', "%$search%")->orWhere('apellidos', 'like', "%$search%"))
-                    ->orWhereHas('dispositivo', fn($q) => $q->where('nombre_dispositivo', 'like', "%$search%"));
-            })
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.dispositivo_empleado.list', compact('mapeos'));
+        return $query->where('zk_user_id', 'like', "%$search%")
+            ->orWhereHas('empleado', fn($q) => $q->where('nombres', 'like', "%$search%")->orWhere('apellidos', 'like', "%$search%"))
+            ->orWhereHas('dispositivo', fn($q) => $q->where('nombre_dispositivo', 'like', "%$search%"));
     }
 
     public function create()
     {
+        $this->authorize('create', DispositivoEmpleado::class);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::activos()->orderBy('nombre_dispositivo')->get();
         return view('admin.dispositivo_empleado.edit-add', [
@@ -52,6 +47,7 @@ class DispositivoEmpleadoController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', DispositivoEmpleado::class);
         $validated = $request->validate([
             'empleado_id' => 'required|exists:empleados,id',
             'dispositivo_id' => 'required|exists:dispositivos,id',
@@ -75,6 +71,7 @@ class DispositivoEmpleadoController extends Controller
 
     public function edit(DispositivoEmpleado $map)
     {
+        $this->authorize('update', $map);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::activos()->orderBy('nombre_dispositivo')->get();
         return view('admin.dispositivo_empleado.edit-add', compact('map', 'empleados', 'dispositivos'));
@@ -82,6 +79,7 @@ class DispositivoEmpleadoController extends Controller
 
     public function update(Request $request, DispositivoEmpleado $map)
     {
+        $this->authorize('update', $map);
         $validated = $request->validate([
             'empleado_id' => 'required|exists:empleados,id',
             'dispositivo_id' => 'required|exists:dispositivos,id',
@@ -104,6 +102,7 @@ class DispositivoEmpleadoController extends Controller
 
     public function destroy(DispositivoEmpleado $map)
     {
+        $this->authorize('delete', $map);
         try {
             $map->delete();
             return redirect()->route('admin.dispositivo-empleado.index')

@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\Log;
 use App\Services\ZkService;
 use App\Http\Requests\StoreDispositivoRequest;
 use App\Http\Requests\UpdateDispositivoRequest;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 
 class DispositivoController extends Controller
 {
-    /**
-     * Constructor para aplicar middleware.
-     */
+    use ManagesCrud;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -25,29 +26,19 @@ class DispositivoController extends Controller
     /**
      * Muestra la vista principal para listar dispositivos.
      */
-    public function index()
-    {
-        // $this->authorize('viewAny', Dispositivo::class); // Descomentar cuando tengas la Policy
-        return view('admin.dispositivos.browse');
-    }
+    protected $model = Dispositivo::class;
+    protected $browseView = 'admin.dispositivos.browse';
+    protected $listView = 'admin.dispositivos.list';
+    protected $with = ['sucursal', 'creador'];
 
     /**
      * Devuelve la lista paginada y con capacidad de búsqueda de dispositivos.
      */
-    public function list(Request $request)
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('viewAny', Dispositivo::class); // Descomentar cuando tengas la Policy
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $dispositivos = Dispositivo::with(['sucursal', 'creador'])
-            ->when($search, fn($q) => $q->where('nombre_dispositivo', 'like', "%$search%")
-                ->orWhere('direccion_ip', 'like', "%$search%")
-                ->orWhere('numero_serie', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.dispositivos.list', compact('dispositivos'));
+        return $query->when($search, fn($q) => $q->where('nombre_dispositivo', 'like', "%$search%")
+            ->orWhere('direccion_ip', 'like', "%$search%")
+            ->orWhere('numero_serie', 'like', "%$search%"));
     }
 
     /**
@@ -55,7 +46,7 @@ class DispositivoController extends Controller
      */
     public function show(Dispositivo $dispositivo)
     {
-        // $this->authorize('view', $dispositivo); // Descomentar cuando tengas la Policy
+        $this->authorize('view', $dispositivo);
         return view('admin.dispositivos.read', compact('dispositivo'));
     }
 
@@ -64,7 +55,7 @@ class DispositivoController extends Controller
      */
     public function create()
     {
-        // $this->authorize('create', Dispositivo::class); // Descomentar cuando tengas la Policy
+        $this->authorize('create', Dispositivo::class);
         $sucursales = Sucursal::where('estado', 'activo')->orderBy('nombre_sucursal')->get();
         return view('admin.dispositivos.edit-add', [
             'dispositivo' => new Dispositivo(),
@@ -77,6 +68,7 @@ class DispositivoController extends Controller
      */
     public function store(StoreDispositivoRequest $request)
     {
+        $this->authorize('create', Dispositivo::class);
         $data = $request->validated();
         $data['creado_por'] = auth()->id();
         Dispositivo::create($data);
@@ -90,7 +82,7 @@ class DispositivoController extends Controller
      */
     public function edit(Dispositivo $dispositivo)
     {
-        // $this->authorize('update', $dispositivo); // Descomentar cuando tengas la Policy
+        $this->authorize('update', $dispositivo);
         $sucursales = Sucursal::where('estado', 'activo')->orderBy('nombre_sucursal')->get();
         return view('admin.dispositivos.edit-add', compact('dispositivo', 'sucursales'));
     }
@@ -100,6 +92,7 @@ class DispositivoController extends Controller
      */
     public function update(UpdateDispositivoRequest $request, Dispositivo $dispositivo)
     {
+        $this->authorize('update', $dispositivo);
         $dispositivo->update($request->validated());
 
         return redirect()->route('admin.dispositivos.index')
@@ -111,7 +104,7 @@ class DispositivoController extends Controller
      */
     public function destroy(Dispositivo $dispositivo)
     {
-        // $this->authorize('delete', $dispositivo); // Descomentar cuando tengas la Policy
+        $this->authorize('delete', $dispositivo);
         try {
             $dispositivo->delete();
             return redirect()->route('admin.dispositivos.index')

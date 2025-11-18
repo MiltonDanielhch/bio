@@ -12,7 +12,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($registros as $registro)
+            @forelse ($items as $registro)
                 <tr>
                     <td>{{ $registro->id }}</td>
                     <td>{{ $registro->empleado->full_name ?? 'N/A' }}</td>
@@ -40,13 +40,13 @@
 
 <div class="col-md-12">
     <div class="col-md-6" style="overflow-x:auto">
-        @if(count($registros) > 0)
-            <p class="text-muted">Mostrando del {{ $registros->firstItem() }} al {{ $registros->lastItem() }} de {{ $registros->total() }} registros.</p>
+        @if($items->count() > 0)
+            <p class="text-muted">Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.</p>
         @endif
     </div>
     <div class="col-md-6">
         <nav class="pull-right">
-            {{ $registros->links() }}
+            {{ $items->links() }}
         </nav>
     </div>
 </div>

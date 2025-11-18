@@ -10,24 +10,28 @@ class AsignacionHorarioPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(User $user){
+    public function viewAny(User $user)
+    {
         return $user->hasPermission('browse_asignacion_horarios');
     }
-    
-    public function view(User $user, AsignacionHorario $a) {
+
+    public function view(User $user, AsignacionHorario $asignacionHorario)
+    {
         return $user->hasPermission('read_asignacion_horarios');
     }
-    
-    public function create(User $user){
+
+    public function create(User $user)
+    {
         return $user->hasPermission('add_asignacion_horarios');
     }
-    
-    public function update(User $user, AsignacionHorario $a) {
+
+    public function update(User $user, AsignacionHorario $asignacionHorario)
+    {
         return $user->hasPermission('edit_asignacion_horarios');
     }
-    
-    public function delete(User $user, AsignacionHorario $a) {
+
+    public function delete(User $user, AsignacionHorario $asignacionHorario)
+    {
         return $user->hasPermission('delete_asignacion_horarios');
     }
-    
 }

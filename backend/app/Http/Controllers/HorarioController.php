@@ -6,32 +6,26 @@ use App\Models\Horario;
 use App\Models\Empresa;
 use App\Http\Requests\StoreHorarioRequest;
 use App\Http\Requests\UpdateHorarioRequest;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
 
 class HorarioController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Horario::class;
+    protected $browseView = 'admin.horarios.browse';
+    protected $listView = 'admin.horarios.list';
+    protected $with = ['empresa', 'creador'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        $this->authorize('viewAny', Horario::class);
-        return view('admin.horarios.browse');
-    }
-
-    public function list(\Illuminate\Http\Request $request)
-    {
-        $this->authorize('viewAny', Horario::class);
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $horarios = Horario::with(['empresa', 'creador'])
-            ->when($search, fn($q) => $q->where('nombre_horario', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.horarios.list', compact('horarios'));
+        return $query->when($search, fn($q) => $q->where('nombre_horario', 'like', "%$search%"));
     }
 
     public function show(Horario $horario)
@@ -44,11 +38,12 @@ class HorarioController extends Controller
     {
         $this->authorize('create', Horario::class);
         $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
-        return view('admin.horarios.edit-add', compact('empresas'));
+        return view('admin.horarios.edit-add', ['horario' => new Horario(), 'empresas' => $empresas]);
     }
 
     public function store(StoreHorarioRequest $request)
     {
+        $this->authorize('create', Horario::class);
         $data = $request->validated();
         $data['creado_por'] = auth()->id();
         Horario::create($data);
@@ -66,6 +61,7 @@ class HorarioController extends Controller
 
     public function update(UpdateHorarioRequest $request, Horario $horario)
     {
+        $this->authorize('update', $horario);
         $horario->update($request->validated());
         return redirect()->route('admin.horarios.index')
             ->with(['message' => 'Horario actualizado.', 'alert-type' => 'success']);

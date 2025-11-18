@@ -2,36 +2,31 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Sucursal;
 use App\Models\Empresa;
 use App\Http\Requests\StoreSucursalRequest;
 use App\Http\Requests\UpdateSucursalRequest;
+use Illuminate\Database\Eloquent\Builder;
+use App\Traits\ManagesCrud;
 
 class SucursalController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Sucursal::class;
+    protected $browseView = 'admin.sucursales.browse';
+    protected $listView = 'admin.sucursales.list';
+    protected $with = ['empresa', 'creador'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        // $this->authorize('viewAny', Sucursal::class);
-        return view('admin.sucursales.browse');
-    }
-
-    public function list(\Illuminate\Http\Request $request)
-    {
-        $this->authorize('viewAny', Sucursal::class);
-        $search   = $request->get('search', '');
-        $paginate = $request->get('paginate', 10);
-
-        $sucursales = Sucursal::with(['empresa', 'creador'])
-            ->when($search, fn($q) => $q->where('nombre_sucursal', 'like', "%$search%"))
-            ->orderBy('id', 'desc')
-            ->paginate($paginate);
-
-        return view('admin.sucursales.list', compact('sucursales'));
+        return $query->when($search, fn($q) => $q->where('nombre_sucursal', 'like', "%$search%"));
     }
 
     public function show(Sucursal $sucursal)
@@ -43,7 +38,7 @@ class SucursalController extends Controller
     public function create()
     {
         $this->authorize('create', Sucursal::class);
-        $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
+        $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get(); // Se mantiene la lógica específica
         return view('admin.sucursales.edit-add', [
             'sucursal' => new Sucursal(),
             'empresas' => $empresas,

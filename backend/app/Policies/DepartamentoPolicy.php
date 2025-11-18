@@ -10,24 +10,28 @@ class DepartamentoPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(User $user){
+    public function viewAny(User $user)
+    {
         return $user->hasPermission('browse_departamentos');
     }
 
-    public function view(User $user, Departamento $d) {
+    public function view(User $user, Departamento $departamento)
+    {
         return $user->hasPermission('read_departamentos');
     }
 
-    public function create(User $user){
+    public function create(User $user)
+    {
         return $user->hasPermission('add_departamentos');
     }
 
-    public function update(User $user, Departamento $d) {
+    public function update(User $user, Departamento $departamento)
+    {
         return $user->hasPermission('edit_departamentos');
     }
 
-    public function delete(User $user, Departamento $d) {
+    public function delete(User $user, Departamento $departamento)
+    {
         return $user->hasPermission('delete_departamentos');
     }
-
 }
