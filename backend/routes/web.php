@@ -88,27 +88,21 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
     Route::get('incidencias/ajax/list', [\App\Http\Controllers\IncidenciaController::class, 'list'])->name('admin.incidencias.ajax.list');
     Route::resource('incidencias', \App\Http\Controllers\IncidenciaController::class)->except(['show'])->names('admin.incidencias');
 
-    // ───────────────── RUTAS LEGACY / PERSONALIZADAS ─────────────────
-    // ──────────────── PERSONAS ────────────────
-    Route::prefix('people')->group(function () {
-        Route::get('/', [PersonController::class, 'index'])->name('voyager.people.index');
-        Route::get('/ajax/list', [PersonController::class, 'list'])->name('voyager.people.ajax.list');
-        Route::post('/', [PersonController::class, 'store'])->name('voyager.people.store');
-        Route::put('/{id}', [PersonController::class, 'update'])->name('voyager.people.update');
-    });
+    // ───────────────── RUTAS LEGACY (REFACTORIZADAS) ─────────────────
 
-    // ──────────────── USUARIOS ────────────────
-    Route::prefix('users')->group(function () {
-        Route::get('/ajax/list', [UserController::class, 'list'])->name('voyager.users.ajax.list');
-        Route::post('/store', [UserController::class, 'store'])->name('voyager.users.store');
-        Route::put('/{id}', [UserController::class, 'update'])->name('voyager.users.update');
-        Route::delete('/{id}/deleted', [UserController::class, 'destroy'])->name('voyager.users.destroy');
-    });
+    // Personas (Usuarios de Voyager)
+    Route::get('people/ajax/list', [PersonController::class, 'list'])->name('admin.people.ajax.list');
+    Route::resource('people', PersonController::class)->except(['show'])->names('admin.people');
+
+    // Usuarios (del sistema, si es diferente a Personas)
+    Route::get('users/ajax/list', [UserController::class, 'list'])->name('admin.users.ajax.list');
+    Route::resource('users', UserController::class)->except(['show'])->names('admin.users');
 
     // ──────────────── ROLES ────────────────
-    Route::prefix('roles')->group(function () {
-        Route::get('/ajax/list', [RoleController::class, 'list'])->name('voyager.roles.ajax.list');
-    });
+    // Nota: Voyager maneja las rutas de roles. Si necesitas una lista AJAX, esta ruta está bien.
+    // Si se refactoriza a un CRUD completo, se usaría Route::resource.
+    Route::get('roles/ajax/list', [RoleController::class, 'list'])->name('admin.roles.ajax.list');
+
 
     // ──────────────── AJAX GENÉRICO ────────────────
     Route::prefix('ajax')->group(function () {

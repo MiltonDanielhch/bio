@@ -6,133 +6,125 @@ use Illuminate\Http\Request;
 use App\Models\Person;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ManagesCrud;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class PersonController extends Controller
 {
+    use ManagesCrud;
+
+    protected $model = Person::class;
+    protected $browseView = 'administrations.people.browse';
+    protected $listView = 'administrations.people.list';
+    protected $orderBy = ['id', 'desc'];
+
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    protected function applySearch(Builder $query, string $search): Builder
     {
-        $this->custom_authorize('browse_people');
-
-        return view('administrations.people.browse');
-    }
-
-   public function list()
-    {
-        // Parámetros de entrada
-        $search   = request('search');
-        $paginate = request('paginate', 10);
-
         // Sub-consulta para el nombre completo
-        $fullNameRaw = "TRIM(CONCAT(
-            COALESCE(first_name, ''), ' ',
-            COALESCE(middle_name, ''), ' ',
-            COALESCE(paternal_surname, ''), ' ',
-            COALESCE(maternal_surname, '')
-        ))";
+        $fullNameRaw = "TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(middle_name, ''), ' ', COALESCE(paternal_surname, ''), ' ', COALESCE(maternal_surname, '')))";
 
-        // Consulta principal
-        $data = Person::query()
-            ->select('*')
+        return $query->select('people.*') // Evita ambigüedad
             ->selectRaw("$fullNameRaw as full_name")
-            ->when($search, function ($q) use ($search, $fullNameRaw) {
+            ->where(function ($q) use ($search, $fullNameRaw) {
                 // Búsqueda numérica exacta (id o ci)
                 if (is_numeric($search)) {
-                    $q->where(function ($sub) use ($search) {
-                        $sub->where('id', $search)
-                            ->orWhere('ci', 'like', "%{$search}%");
-                    });
+                    $q->where('id', $search)
+                      ->orWhere('ci', 'like', "%{$search}%");
                 }
 
                 // Búsqueda textual parcial
-                $q->orWhere(function ($sub) use ($search, $fullNameRaw) {
-                    $sub->where('phone', 'like', "%{$search}%")
-                        ->orWhere('first_name', 'like', "%{$search}%")
-                        ->orWhere('middle_name', 'like', "%{$search}%")
-                        ->orWhere('paternal_surname', 'like', "%{$search}%")
-                        ->orWhere('maternal_surname', 'like', "%{$search}%")
-                        ->orWhereRaw("{$fullNameRaw} like ?", ["%{$search}%"]);
-                });
-            })
-            ->whereNull('deleted_at')
-            ->orderByDesc('id')
-            ->paginate($paginate);
-
-        return view('administrations.people.list', compact('data'));
+                $q->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('middle_name', 'like', "%{$search}%")
+                  ->orWhere('paternal_surname', 'like', "%{$search}%")
+                  ->orWhere('maternal_surname', 'like', "%{$search}%")
+                  ->orWhereRaw("{$fullNameRaw} like ?", ["%{$search}%"]);
+            });
     }
+
+    public function create()
+    {
+        $this->authorize('create', Person::class);
+        return view('administrations.people.edit-add', ['person' => new Person()]);
+    }
+
 
     public function store(Request $request)
     {
-        $this->custom_authorize('add_people');
-        $request->validate([
-            'image' => 'image|mimes:jpeg,jpg,png,bmp,webp'
-        ]);
+        $this->authorize('create', Person::class);
+        $data = $this->validateRequest($request);
+
         DB::beginTransaction();
         try {
-            // Si envian las imágenes
-            $storageController = new StorageController();
-            Person::create([
-                'ci' => $request->ci,
-                'birth_date' => $request->birth_date,
-                'gender' => $request->gender,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'paternal_surname' => $request->paternal_surname,
-                'maternal_surname' => $request->maternal_surname,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'image' => $storageController->store_image($request->image, 'people'),
-            ]);
+            if ($request->hasFile('image')) {
+                $storageController = new StorageController();
+                $data['image'] = $storageController->store_image($request->file('image'), 'people');
+            }
+
+            Person::create($data);
 
             DB::commit();
-            return redirect()->route('voyager.people.index')->with(['message' => 'Registrado exitosamente', 'alert-type' => 'success']);
+            return redirect()->route('admin.people.index')->with(['message' => 'Registrado exitosamente', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('voyager.people.index')->with(['message' => $th->getMessage(), 'alert-type' => 'error']);
+            Log::error("Error al crear persona: " . $th->getMessage());
+            return redirect()->route('admin.people.index')->with(['message' => 'Ocurrió un error al registrar.', 'alert-type' => 'error']);
         }
     }
 
+    public function edit(Person $person)
+    {
+        $this->authorize('update', $person);
+        return view('administrations.people.edit-add', compact('person'));
+    }
 
-    public function update(Request $request, $id){
-        $this->custom_authorize('edit_people');
-        $request->validate([
-            'image' => 'image|mimes:jpeg,jpg,png,bmp,webp'
-        ]);
+    public function update(Request $request, Person $person)
+    {
+        $this->authorize('update', $person);
+        $data = $this->validateRequest($request, $person->id);
 
         DB::beginTransaction();
         try {
-            $storageController = new StorageController();
-
-            $person = Person::find($id);
-            $person->ci = $request->ci;
-            $person->birth_date = $request->birth_date;
-            $person->gender = $request->gender;
-            $person->first_name = $request->first_name;
-            $person->middle_name = $request->middle_name;
-            $person->paternal_surname = $request->paternal_surname;
-            $person->maternal_surname = $request->maternal_surname;
-            $person->email = $request->email;
-            $person->phone = $request->phone;
-            $person->address = $request->address;
-            $person->status = $request->status=='on' ? 1 : 0;
-
-            if ($request->image) {
-                $person->image = $storageController->store_image($request->image, 'people');
+            if ($request->hasFile('image')) {
+                $storageController = new StorageController();
+                // Opcional: eliminar imagen anterior si existe
+                // if ($person->image) { Storage::delete($person->image); }
+                $data['image'] = $storageController->store_image($request->file('image'), 'people');
             }
 
-
-            $person->save();
+            $person->update($data);
 
             DB::commit();
-            return redirect()->route('voyager.people.index')->with(['message' => 'Actualizada exitosamente', 'alert-type' => 'success']);
+            return redirect()->route('admin.people.index')->with(['message' => 'Actualizado exitosamente', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('voyager.people.index')->with(['message' => $th->getMessage(), 'alert-type' => 'error']);
+            Log::error("Error al actualizar persona {$person->id}: " . $th->getMessage());
+            return redirect()->route('admin.people.index')->with(['message' => 'Ocurrió un error al actualizar.', 'alert-type' => 'error']);
         }
+    }
+
+    private function validateRequest(Request $request, $personId = null): array
+    {
+        return $request->validate([
+            'ci' => ['nullable', 'string', 'max:20', Rule::unique('people')->ignore($personId)],
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'paternal_surname' => 'nullable|string|max:100',
+            'maternal_surname' => 'nullable|string|max:100',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|string|in:Masculino,Femenino,otro',
+            'email' => ['nullable', 'email', 'max:191', Rule::unique('people')->ignore($personId)],
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:2048',
+            'status' => 'nullable|boolean',
+        ]);
     }
 }

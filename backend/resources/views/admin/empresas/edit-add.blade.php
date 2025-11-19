@@ -2,7 +2,7 @@
 
 @section('page_title', ($empresa->exists ?? false) ? 'Editar Empresa' : 'Agregar Empresa')
 
-@section('content')
+@section('content') {{-- Se agrega para que funcione el breadcrumb de Voyager --}}
 <div class="page-content container-fluid">
     @if(session('message'))
         <div class="alert alert-{{ session('alert-type', 'info') }} alert-dismissible auto-dismiss">
@@ -11,21 +11,16 @@
         </div>
     @endif
 
-    <form action="{{ ($empresa->exists ?? false)
-            ? route('admin.empresas.update', $empresa)
-            : route('admin.empresas.store') }}"
+    <form action="{{ $empresa->exists ? route('admin.empresas.update', $empresa) : route('admin.empresas.store') }}"
           method="POST"
           id="empresa-form"
           enctype="multipart/form-data">
         @csrf
         @if($empresa->exists ?? false) @method('PUT') @endif
 
-        <div class="panel panel-bordered panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="voyager-briefcase"></i>
-                    {{ ($empresa->exists ?? false) ? 'Editar' : 'Agregar' }} Empresa
-                </h3>
+        <div class="panel panel-bordered">
+            <h3 class="panel-title" style="padding: 10px;">
+                <i class="voyager-briefcase"></i> {{ $empresa->exists ? 'Editar' : 'Agregar' }} Empresa
             </div>
 
             <div class="panel-body">
@@ -181,7 +176,7 @@
 @stop
 
 @section('javascript')
-<script>
+
     $(document).ready(function () {
         setTimeout(function() {
             $('.auto-dismiss').fadeOut('slow', function() { $(this).remove(); });
@@ -207,5 +202,5 @@
             }
         });
     });
-</script>
+
 @stop

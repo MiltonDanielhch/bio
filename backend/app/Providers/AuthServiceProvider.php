@@ -14,6 +14,8 @@ use App\Models\RegistroAsistencia;
 use App\Models\Horario;
 use App\Models\ReporteAsistencia as ModelsReporteAsistencia;
 use App\Models\Incidencia;
+use App\Models\Person;
+use App\Models\User;
 use App\Models\TipoIncidencia;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -37,6 +39,8 @@ class AuthServiceProvider extends ServiceProvider
         Incidencia::class => \App\Policies\IncidenciaPolicy::class,
         DispositivoEmpleado::class => \App\Policies\DispositivoEmpleadoPolicy::class,
         ModelsReporteAsistencia::class => \App\Policies\ReporteAsistenciaPolicy::class,
+        Person::class => \App\Policies\PersonPolicy::class,
+        User::class => \App\Policies\UserPolicy::class,
     ];
 
     /**

@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', __('voyager::generic.'.(isset($dataTypeContent->id) ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular'))
+@section('page_title', (isset($user->id) ? 'Editar' : 'Añadir').' Usuario')
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -8,19 +8,18 @@
 
 @section('page_header')
     <h1 class="page-title">
-        <i class="{{ $dataType->icon }}"></i>
-        {{ __('voyager::generic.'.(isset($dataTypeContent->id) ? 'edit' : 'add')).' '.$dataType->getTranslatedAttribute('display_name_singular') }}
+        <i class="voyager-person"></i>
+        {{ (isset($user->id) ? 'Editar' : 'Añadir').' Usuario' }}
     </h1>
 @stop
 
 @section('content')
     <div class="page-content container-fluid">
         <form class="form-edit-add" role="form"
-              action="@if(!is_null($dataTypeContent->getKey())){{ route('voyager.'.$dataType->slug.'.update', $dataTypeContent->getKey()) }}@else{{ route('voyager.'.$dataType->slug.'.store') }}@endif"
-              {{-- action="@if(!is_null($dataTypeContent->getKey())){{ route('update.users', $dataTypeContent->getKey()) }}@else{{ route('store.users') }}@endif" --}}
+              action="{{ isset($user->id) ? route('admin.users.update', $user->id) : route('admin.users.store') }}"
               method="POST" enctype="multipart/form-data" autocomplete="off">
             <!-- PUT Method if we are editing -->
-            @if(isset($dataTypeContent->id))
+            @if(isset($user->id))
                 {{ method_field("PUT") }}
             @endif
             {{ csrf_field() }}
@@ -41,7 +40,7 @@
 
                         <div class="panel-body">
 
-                            @if (!$dataTypeContent->getKey())
+                            @if (!$user->id)
                                 <div class="form-group">
                                     <label for="customer_id">Persona</label>
                                     <div class="input-group">
@@ -60,58 +59,33 @@
                                 <input type="text" class="form-control" id="name" name="name" placeholder="{{ __('voyager::generic.name') }}"
                                        value="{{ old('name', $dataTypeContent->name ?? '') }}">
                             </div> --}}
-                            <input type="hidden" name="name" id="name" value="{{ old('name', $dataTypeContent->person->full_name ?? '') }}">
+                            <input type="hidden" name="name" id="name" value="{{ old('name', $user->person->full_name ?? '') }}">
 
                             <div class="form-group">
                                 <label for="email">{{ __('voyager::generic.email') }}</label>
-                                <input type="email" class="form-control" id="email" name="email" {{$dataTypeContent->getKey()?'disabled':''}} placeholder="{{ __('voyager::generic.email') }}"
-                                       value="{{ old('email', $dataTypeContent->email ?? '') }}">
+                                <input type="email" class="form-control" id="email" name="email" {{ $user->id ? 'readonly' : '' }} placeholder="{{ __('voyager::generic.email') }}"
+                                       value="{{ old('email', $user->email ?? '') }}">
                             </div>
 
                             <div class="form-group">
                                 <label for="password">{{ __('voyager::generic.password') }}</label>
-                                @if(isset($dataTypeContent->password))
+                                @if(isset($user->id))
                                     <br>
                                     <small>{{ __('voyager::profile.password_hint') }}</small>
                                 @endif
                                 <input type="password" class="form-control" id="password" name="password" value="" autocomplete="new-password">
                             </div>
-                            @php
-                                $rol_id = Auth::user()->role->id;
-                                // $role = TCG\Voyager\Models\Role::whereRaw($rol_id!=1? 'id != 1':1)
-                                //         ->get();
-                                $role = TCG\Voyager\Models\Role::whereRaw($rol_id != 1 ? 'id != 1' : 1)->get();
-                            @endphp
-                            @can('editRoles', $dataTypeContent)
 
-                                <div class="form-group">
-                                    <label>Rol predeterminado</label>
-                                    <select name="role_id" id="role_id" class="form-control select2" required>
-                                        <option value="" disabled selected>Ninguno</option>
-                                        @foreach ($role as $item)
-                                            <option value="{{$item->id}}" @if($dataTypeContent) {{$dataTypeContent->role_id==$item->id? 'selected':''}} @endif >{{$item->name}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                {{-- <div class="form-group">
-                                    <label for="default_role">{{ __('voyager::profile.role_default') }}</label>
-                                    @php
-                                        $dataTypeRows = $dataType->{(isset($dataTypeContent->id) ? 'editRows' : 'addRows' )};
+                            <div class="form-group">
+                                <label>Rol</label>
+                                <select name="role_id" id="role_id" class="form-control select2" required>
+                                    <option value="" disabled selected>-- Seleccionar rol --</option>
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}" @if(old('role_id', $user->role_id) == $role->id) selected @endif>{{ $role->display_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                                        $row     = $dataTypeRows->where('field', 'user_belongsto_role_relationship')->first();
-                                        $options = $row->details;
-                                    @endphp
-                                    @include('voyager::formfields.relationship')
-                                </div> --}}
-                                {{-- <div class="form-group">
-                                    <label for="additional_roles">{{ __('voyager::profile.roles_additional') }}</label>
-                                    @php
-                                        $row     = $dataTypeRows->where('field', 'user_belongstomany_role_relationship')->first();
-                                        $options = $row->details;
-                                    @endphp
-                                    @include('voyager::formfields.relationship')
-                                </div> --}}
-                            @endcan
                             @php
                             if (isset($dataTypeContent->locale)) {
                                 $selected_locale = $dataTypeContent->locale;
@@ -142,12 +116,12 @@
                                         data-on="Habilitado" data-off="Inhabilitado">
                                 </div>
                             @endif --}}
-                            @if ($dataTypeContent->getKey())
+                            @if ($user->id)
                                 <input type="hidden" name="status" value="0">
                                 <input type="checkbox" name="status" class="toggleswitch"
                                     data-on="Habilitado" data-off="Inhabilitado"
                                     value="1"
-                                    {{ $dataTypeContent->status == 1 ? 'checked' : '' }}>
+                                    {{ old('status', $user->status ?? 1) == 1 ? 'checked' : '' }}>
                             @endif
                         </div>
                     </div>
@@ -157,8 +131,8 @@
                     <div class="panel panel panel-bordered panel-warning">
                         <div class="panel-body">
                             <div class="form-group">
-                                @if(isset($dataTypeContent->avatar))
-                                    <img src="{{ filter_var($dataTypeContent->avatar, FILTER_VALIDATE_URL) ? $dataTypeContent->avatar : Voyager::image( $dataTypeContent->avatar ) }}" style="width:200px; height:auto; clear:both; display:block; padding:2px; border:1px solid #ddd; margin-bottom:10px;" />
+                                @if(isset($user->avatar))
+                                    <img src="{{ filter_var($user->avatar, FILTER_VALIDATE_URL) ? $user->avatar : Voyager::image( $user->avatar ) }}" style="width:200px; height:auto; clear:both; display:block; padding:2px; border:1px solid #ddd; margin-bottom:10px;" />
                                 @endif
                                 <input type="file" data-name="avatar" name="avatar">
                             </div>
@@ -171,10 +145,6 @@
                 {{ __('voyager::generic.save') }}
             </button>
         </form>
-        <div style="display:none">
-            <input type="hidden" id="upload_url" value="{{ route('voyager.upload') }}">
-            <input type="hidden" id="upload_type_slug" value="{{ $dataType->slug }}">
-        </div>
     </div>
 
 

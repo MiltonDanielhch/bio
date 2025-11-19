@@ -4,7 +4,7 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nombre</th>                    
+                    <th>Nombre</th>
                     <th>Email.</th>
                     <th>Role</th>
                     <th>Estado</th>
@@ -12,7 +12,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($data as $item)
+                @forelse ($items as $item)
                 <tr>
                     <td>{{ $item->id }}</td>
                     <td>
@@ -28,7 +28,7 @@
                                     <td ><img src="{{ $image }}" alt="{{ $item->person->first_name }} " style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px"></td>
                                     <td>
                                         <small>CI:</small> {{$item->person->ci}} <br>
-                                        {{ strtoupper($item->person->first_name) }} {{ strtoupper($item->person->last_name) }} 
+                                        {{ strtoupper($item->person->first_name) }} {{ strtoupper($item->person->last_name) }}
                                     </td>
                                 </tr>
                             </table>
@@ -37,33 +37,31 @@
                         @endif
                     </td>
                     <td>{{ $item->email }}</td>
-                    @php
-                        $rol = TCG\Voyager\Models\Role::where('id', $item->role_id)->first();
-                    @endphp
-                    <td>{{ $item->role_id?$rol->name:'Sin Permiso' }}</td>
+                    <td>{{ $item->role->name ?? 'Sin Permiso' }}</td>
                     <td style="text-align: center">
-                        @if ($item->status==1)  
+                        @if ($item->status==1)
                             <label class="label label-success">Activo</label>
                         @else
                             <label class="label label-warning">Inactivo</label>
                         @endif
                     </td>
                     <td class="no-sort no-click bread-actions text-right">
-                        @if (auth()->user()->hasPermission('read_users'))
-                            <a href="{{ route('voyager.users.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                        {{-- La ruta 'show' fue excluida, por lo que el botón "Ver" se comenta --}}
+                        {{-- @can('view', $item)
+                            <a href="{{ route('admin.users.show', $item) }}" title="Ver" class="btn btn-sm btn-warning view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm">Ver</span>
                             </a>
-                        @endif
-                        @if (auth()->user()->hasPermission('edit_users'))
-                            <a href="{{ route('voyager.users.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
+                        @endcan --}}
+                        @can('update', $item)
+                            <a href="{{ route('admin.users.edit', $item) }}" title="Editar" class="btn btn-sm btn-primary edit">
                                 <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm">Editar</span>
                             </a>
-                        @endif
-                        @if (auth()->user()->hasPermission('delete_users'))
-                            <a href="#" onclick="deleteItem('{{ route('voyager.users.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                        @endcan
+                        @can('delete', $item)
+                            <a href="#" onclick="deleteItem('{{ route('admin.users.destroy', $item) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm">Eliminar</span>
                             </a>
-                        @endif
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -84,26 +82,27 @@
 
 <div class="col-md-12">
     <div class="col-md-4" style="overflow-x:auto">
-        @if(count($data)>0)
-            <p class="text-muted">Mostrando del {{$data->firstItem()}} al {{$data->lastItem()}} de {{$data->total()}} registros.</p>
+        @if(count($items)>0)
+            <p class="text-muted">Mostrando del {{$items->firstItem()}} al {{$items->lastItem()}} de {{$items->total()}} registros.</p>
         @endif
     </div>
     <div class="col-md-8" style="overflow-x:auto">
         <nav class="text-right">
-            {{ $data->links() }}
+            {{ $items->links() }}
         </nav>
     </div>
 </div>
 
 <script>
-   
    var page = "{{ request('page') }}";
     $(document).ready(function(){
         $('.page-link').click(function(e){
             e.preventDefault();
             let link = $(this).attr('href');
             if(link){
-                page = link.split('=')[1];
+                // Se usa URL para obtener el parámetro de forma segura
+                let url = new URL(link);
+                let page = url.searchParams.get('page') || 1;
                 list(page);
             }
         });

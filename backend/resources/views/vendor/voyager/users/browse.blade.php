@@ -14,11 +14,11 @@
                             </h1>
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px">
-                            @if (auth()->user()->hasPermission('add_users'))
-                            <a href="{{ route('voyager.users.create') }}" class="btn btn-success">
+                            @can('create', App\Models\User::class)
+                            <a href="{{ route('admin.users.create') }}" class="btn btn-success">
                                 <i class="voyager-plus"></i> <span>Crear</span>
                             </a>
-                            @endif
+                            @endcan
                         </div>
                     </div>
                 </div>

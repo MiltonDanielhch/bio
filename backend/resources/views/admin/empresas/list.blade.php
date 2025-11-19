@@ -79,7 +79,7 @@
         $('.page-link').click(function(e){
             e.preventDefault();
             const url = new URL($(this).attr('href'));
-            const page = url.searchParams.get('page') || 1;
+            const page = url.searchParams.get('page') || 1; // Obtener el número de página de la URL
             if (typeof list === 'function') list(page);
             else window.location.href = $(this).attr('href');
         });

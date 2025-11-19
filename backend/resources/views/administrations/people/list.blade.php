@@ -13,7 +13,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($data as $item)
+                @forelse ($items as $item)
                 <tr>
                     <td>{{ $item->id }}</td>
                     <td>{{ $item->ci }}</td>
@@ -55,21 +55,22 @@
 
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
-                        @if (auth()->user()->hasPermission('read_people'))
-                            <a href="{{ route('voyager.people.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                        {{-- El método show fue excluido del resource, por lo que esta ruta no existe. Se comenta para evitar errores. --}}
+                        {{-- @can('view', $item)
+                            <a href="{{ route('admin.people.show', $item) }}" title="Ver" class="btn btn-sm btn-warning view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm">Ver</span>
                             </a>
-                        @endif
-                        @if (auth()->user()->hasPermission('edit_people'))
-                            <a href="{{ route('voyager.people.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
+                        @endcan --}}
+                        @can('update', $item)
+                            <a href="{{ route('admin.people.edit', $item) }}" title="Editar" class="btn btn-sm btn-primary edit">
                                 <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm">Editar</span>
                             </a>
-                        @endif
-                        @if (auth()->user()->hasPermission('delete_people'))
-                            <a href="#" onclick="deleteItem('{{ route('voyager.people.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                        @endcan
+                        @can('delete', $item)
+                            <a href="#" onclick="deleteItem('{{ route('admin.people.destroy', $item) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm">Eliminar</span>
                             </a>
-                        @endif
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -90,13 +91,13 @@
 
 <div class="col-md-12">
     <div class="col-md-4" style="overflow-x:auto">
-        @if(count($data)>0)
-            <p class="text-muted">Mostrando del {{$data->firstItem()}} al {{$data->lastItem()}} de {{$data->total()}} registros.</p>
+        @if(count($items)>0)
+            <p class="text-muted">Mostrando del {{$items->firstItem()}} al {{$items->lastItem()}} de {{$items->total()}} registros.</p>
         @endif
     </div>
     <div class="col-md-8" style="overflow-x:auto">
         <nav class="text-right">
-            {{ $data->links() }}
+            {{ $items->links() }}
         </nav>
     </div>
 </div>

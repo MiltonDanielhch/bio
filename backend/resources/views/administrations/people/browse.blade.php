@@ -14,11 +14,12 @@
                             </h1>
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px">
-                            @if (auth()->user()->hasPermission('add_people'))
-                            <a href="{{ route('voyager.people.create') }}" class="btn btn-success">
+                            {{-- Se actualiza la comprobación de permisos para usar la Policy y se corrige el nombre de la ruta --}}
+                            @can('create', App\Models\Person::class)
+                            <a href="{{ route('admin.people.create') }}" class="btn btn-success">
                                 <i class="voyager-plus"></i> <span>Crear</span>
                             </a>
-                            @endif
+                            @endcan
                         </div>
                     </div>
                 </div>
