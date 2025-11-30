@@ -144,36 +144,10 @@
 @section('javascript')
 <script>
     $(document).ready(function () {
+        // Script para auto-cerrar las alertas de sesión después de 5 segundos
         setTimeout(function() {
             $('.auto-dismiss').fadeOut('slow', function() { $(this).remove(); });
         }, 5000);
-        $('.auto-dismiss .close').click(function(e) {
-            e.preventDefault();
-            $(this).closest('.alert').fadeOut('slow', function() { $(this).remove(); });
-        });
-
-        // Validación básica antes de enviar
-        $('#asignacion-form').on('submit', function () {
-            const empleado = $('#empleado_id').val();
-            const horario  = $('#horario_id').val();
-            const inicio   = $('#fecha_inicio').val();
-
-            if (!empleado) {
-                alert('Selecciona un empleado');
-                $('#empleado_id').focus();
-                return false;
-            }
-            if (!horario) {
-                alert('Selecciona un horario');
-                $('#horario_id').focus();
-                return false;
-            }
-            if (!inicio) {
-                alert('Indica la fecha de inicio');
-                $('#fecha_inicio').focus();
-                return false;
-            }
-        });
     });
 </script>
 @stop

@@ -26,6 +26,12 @@
             }
         });
 
+        // Handle change on pagination selector
+        $('#select-paginate').on('change', function() {
+            countPage = $(this).val();
+            list(1);
+        });
+
         // Handle clicks on pagination links inside the list container
         $('#list-container').on('click', '.pagination a', function(e) {
             e.preventDefault();

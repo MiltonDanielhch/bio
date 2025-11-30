@@ -11,20 +11,18 @@
         </div>
     @endif
 
-    <form action="{{ ($sucursal->exists ?? false)
-            ? route('admin.sucursales.update', $sucursal)
-            : route('admin.sucursales.store') }}"
+    <form action="{{ $sucursal->exists ? route('admin.sucursales.update', $sucursal) : route('admin.sucursales.store') }}"
           method="POST"
           id="sucursal-form"
           enctype="multipart/form-data">
         @csrf
-        @if($sucursal->exists ?? false) @method('PUT') @endif
+        @if($sucursal->exists) @method('PUT') @endif
 
         <div class="panel panel-bordered panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="voyager-shop"></i>
-                    {{ ($sucursal->exists ?? false) ? 'Editar' : 'Agregar' }} Sucursal
+                    {{ $sucursal->exists ? 'Editar' : 'Agregar' }} Sucursal
                 </h3>
             </div>
 
@@ -193,7 +191,7 @@
                     <i class="voyager-angle-left"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="voyager-check"></i> {{ ($sucursal->exists ?? false) ? 'Actualizar' : 'Guardar' }}
+                    <i class="voyager-check"></i> {{ $sucursal->exists ? 'Actualizar' : 'Guardar' }}
                 </button>
             </div>
         </div>

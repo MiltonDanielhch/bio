@@ -1,5 +1,6 @@
-<div class="table-responsive">
-    <table id="dataTable" class="table table-hover">
+<div class="col-md-12">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
         <thead>
             <tr>
                 <th>ID</th>
@@ -48,17 +49,18 @@
                 </tr>
             @endforelse
         </tbody>
-    </table>
+        </table>
+    </div>
 </div>
 
 <div class="col-md-12">
-    <div class="col-md-6" style="overflow-x:auto">
+    <div class="col-md-4 text-muted">
         @if($items->count() > 0)
             <p class="text-muted">Mostrando del {{ $items->firstItem() }} al {{ $items->lastItem() }} de {{ $items->total() }} registros.</p>
         @endif
     </div>
-    <div class="col-md-6">
-        <nav class="pull-right">
+    <div class="col-md-8 text-right">
+        <nav class="text-right">
             {{ $items->links() }}
         </nav>
     </div>

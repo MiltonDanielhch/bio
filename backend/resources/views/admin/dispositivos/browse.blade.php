@@ -1,17 +1,30 @@
 @extends('voyager::master')
 
-@section('page_title', 'Viendo Dispositivos')
+@section('page_title', 'Dispositivos')
 
 @section('page_header')
     <div class="container-fluid">
-        <h1 class="page-title">
-            <i class="voyager-harddrive"></i> Dispositivos
-        </h1>
-        {{-- @can('add', \App\Models\Dispositivo::class) --}}
-            <a href="{{ route('admin.dispositivos.create') }}" class="btn btn-success btn-add-new">
-                <i class="voyager-plus"></i> <span>Añadir nuevo</span>
-            </a>
-        {{-- @endcan --}}
+        @include('voyager::alerts')
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered" style="margin-bottom: 0;">
+                    <div class="panel-body" style="padding: 0;">
+                        <div class="col-md-8" style="padding: 0;">
+                            <h1 class="page-title">
+                                <i class="voyager-harddrive"></i> Dispositivos
+                            </h1>
+                        </div>
+                        <div class="col-md-4 text-right" style="margin-top: 30px;">
+                            @can('create', App\Models\Dispositivo::class)
+                                <a href="{{ route('admin.dispositivos.create') }}" class="btn btn-success btn-add-new">
+                                    <i class="voyager-plus"></i> <span>Añadir nuevo</span>
+                                </a>
+                            @endcan
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @stop
 
@@ -23,17 +36,46 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         <div class="row">
-                            <div class="col-sm-10">
-                                <div class="dataTables_length" id="dataTable_length">
-                                    <label>Mostrar <select id="select-paginate" class="form-control input-sm"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> registros</label>
+                            <div class="col-sm-9" style="margin-bottom: 0">
+                                <div class="dataTables_length" id="dataTable">
+                                    <label>Mostrar
+                                        <select id="select-paginate" class="form-control input-sm">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select> registros
+                                    </label>
                                 </div>
                             </div>
-                            <div class="col-sm-2">
-                                <input type="text" id="input-search" class="form-control" placeholder="Buscar">
+                            <div class="col-sm-3" style="margin-bottom: 0">
+                                <input type="text" id="search" class="form-control" placeholder="Buscar...">
+                                <br>
                             </div>
                         </div>
-                        <div id="div-results" style="min-height: 120px"></div>
+                        <div class="row" id="list-container" style="min-height: 120px"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal eliminar --}}
+    <div class="modal modal-danger fade" tabindex="-1" id="delete_modal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title"><i class="voyager-trash"></i> ¿Estás seguro de que quieres eliminar?</h4>
+                </div>
+                <div class="modal-footer">
+                    <form action="#" id="delete_form" method="POST">
+                        @method('DELETE') @csrf
+                        <input type="submit" class="btn btn-danger pull-right delete-confirm" value="Sí, eliminar">
+                    </form>
+                    <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -41,61 +83,14 @@
 @stop
 
 @section('css')
-<style>
-    .loading-icon {
-        animation: spin 1.5s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
 @stop
 
-@section('javascript')
+@push('javascript')
     <script>
-        let countPage = 10;
-        let searchTimeout;
-
-        $(document).ready(function() {
-            list();
-
-            $('#input-search').on('keyup', function (e) {
-                if (e.keyCode === 13) list(1);
-            });
-
-            $('#input-search').on('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => list(1), 500);
-            });
-
-            $('#select-paginate').change(function () {
-                countPage = $(this).val();
-                list(1);
-            });
+        $(document).ready(function () {
+            // Script para auto-cerrar alertas
+            setTimeout(() => $('.auto-dismiss').fadeOut('slow', (el) => $(el).remove()), 5000);
         });
-
-        function list(page = 1) {
-            let url = '{{ route("admin.dispositivos.ajax.list") }}';
-            let search = $('#input-search').val()?.trim() || '';
-
-            $('#div-results').html(`
-                <div class="text-center" style="padding: 40px">
-                    <i class="voyager-refresh voyager-2x loading-icon"></i><br>Cargando...
-                </div>
-            `);
-
-            $.ajax({
-                url: `${url}?search=${encodeURIComponent(search)}&paginate=${countPage}&page=${page}`,
-                type: 'get',
-                success: function (response) {
-                    $('#div-results').html(response);
-                },
-                error: function (xhr) {
-                    console.error(xhr);
-                    $('#div-results').html('<div class="alert alert-danger text-center">Error al cargar los datos.</div>');
-                }
-            });
-        }
     </script>
-@stop
+    @include('admin.partials.list-browse-script', ['listUrl' => route('admin.dispositivos.ajax.list')])
+@endpush

@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table id="dataTable" class="table table-hover">
+    <table class="table table-hover">
         <thead>
             <tr>
                 <th>ID</th>
@@ -34,7 +34,11 @@
                             </a>
                         @endcan
                         @can('delete', $item)
-                            <button title="Borrar" class="btn btn-sm btn-danger delete" data-id="{{ $item->id }}" data-toggle="modal" data-target="#delete_modal">
+                            <button title="Borrar"
+                                    class="btn btn-sm btn-danger delete"
+                                    data-toggle="modal"
+                                    data-target="#delete_modal"
+                                    onclick="deleteItem('{{ route('admin.dispositivos.destroy', $item->id) }}', '{{ $item->nombre_dispositivo }}')">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm">Borrar</span>
                             </button>
                         @endcan

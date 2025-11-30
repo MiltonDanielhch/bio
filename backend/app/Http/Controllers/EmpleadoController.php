@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Empleado;
 use App\Models\Empresa;
 use App\Models\Departamento;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreEmpleadoRequest;
+use App\Http\Requests\UpdateEmpleadoRequest;
 use App\Traits\ManagesCrud;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
@@ -45,10 +46,10 @@ class EmpleadoController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreEmpleadoRequest $request)
     {
         $this->authorize('create', Empleado::class);
-        $data = $this->validateRequest($request);
+        $data = $request->validated();
 
         if ($request->hasFile('foto_perfil')) {
             $data['foto_perfil'] = $request->file('foto_perfil')->store('empleados/fotos', 'public');
@@ -69,10 +70,10 @@ class EmpleadoController extends Controller
         return view('admin.empleados.edit-add', compact('empleado', 'empresas', 'departamentos'));
     }
 
-    public function update(Request $request, Empleado $empleado)
+    public function update(UpdateEmpleadoRequest $request, Empleado $empleado)
     {
         $this->authorize('update', $empleado);
-        $data = $this->validateRequest($request, $empleado->id);
+        $data = $request->validated();
 
         if ($request->hasFile('foto_perfil')) {
             if ($empleado->foto_perfil) {
@@ -102,26 +103,5 @@ class EmpleadoController extends Controller
             return redirect()->route('admin.empleados.index')
                 ->with(['message' => 'Error al eliminar el empleado.', 'alert-type' => 'error']);
         }
-    }
-
-    private function validateRequest(Request $request, $empleadoId = null): array
-    {
-        return $request->validate([
-            'empresa_id' => 'required|exists:empresas,id',
-            'departamento_id' => 'nullable|exists:departamentos,id',
-            'codigo_empleado' => ['required', 'string', 'max:50', Rule::unique('empleados')->ignore($empleadoId)],
-            'dni' => ['required', 'string', 'max:20', Rule::unique('empleados')->ignore($empleadoId)],
-            'nombres' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'fecha_nacimiento' => 'nullable|date',
-            'genero' => 'nullable|string',
-            'email' => ['nullable', 'email', Rule::unique('empleados')->ignore($empleadoId)],
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string',
-            'fecha_contratacion' => 'required|date',
-            'tipo_contrato' => 'required|string',
-            'estado' => 'required|string',
-            'foto_perfil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
     }
 }

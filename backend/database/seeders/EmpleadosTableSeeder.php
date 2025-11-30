@@ -48,7 +48,7 @@ class EmpleadosTableSeeder extends Seeder
                 'telefono'          => '3-' . rand(4600000, 4699999),
                 'direccion'         => 'Ciudad de ' . explode('-', $e['codigo'])[0],
                 'fecha_contratacion'=> now()->subMonths(rand(1, 60)),
-                'tipo_contrato'     => collect(['indefinido', 'temporal'])->random(),
+                'tipo_contrato'     => collect(['indefinido', 'plazo_fijo'])->random(),
                 'estado'            => 'activo',
                 'foto_perfil'       => null,
                 'user_id'           => null,

@@ -25,7 +25,11 @@
                             </a>
                         @endcan
                         @can('delete', $item)
-                            <button title="Borrar" class="btn btn-sm btn-danger delete" data-id="{{ $item->id }}" data-toggle="modal" data-target="#delete_modal">
+                            <button title="Borrar"
+                                    class="btn btn-sm btn-danger delete"
+                                    data-toggle="modal"
+                                    data-target="#delete_modal"
+                                    onclick="deleteItem('{{ route('admin.dispositivo-empleado.destroy', $item->id) }}', 'Mapeo #{{ $item->id }}')">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm">Borrar</span>
                             </button>
                         @endcan

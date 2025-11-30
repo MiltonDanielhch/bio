@@ -1,48 +1,78 @@
 @extends('voyager::master')
 
-@section('page_title', 'Mapeo de Empleados en Dispositivos')
+@section('page_title', 'Mapeo Dispositivo-Empleado')
 
 @section('page_header')
     <div class="container-fluid">
-        <h1 class="page-title">
-            <i class="voyager-data"></i> Mapeo de Empleados en Dispositivos
-        </h1>
-        <a href="{{ route('admin.dispositivo-empleado.create') }}" class="btn btn-success btn-add-new">
-            <i class="voyager-plus"></i> <span>Crear Mapeo</span>
-        </a>
-    </div>
-@stop
-
-@section('content')
-    <div class="page-content browse container-fluid">
         @include('voyager::alerts')
         <div class="row">
             <div class="col-md-12">
-                <div class="panel panel-bordered">
-                    <div class="panel-body">
-                        <div id="list-view">
-                           {{-- El contenido se cargará aquí vía AJAX --}}
-                           <p class="text-center"><i class="voyager-watch"></i> Cargando...</p>
+                <div class="panel panel-bordered" style="margin-bottom: 0;">
+                    <div class="panel-body" style="padding: 0;">
+                        <div class="col-md-8" style="padding: 0;">
+                            <h1 class="page-title">
+                                <i class="voyager-data"></i> Mapeo Dispositivo-Empleado
+                            </h1>
+                        </div>
+                        <div class="col-md-4 text-right" style="margin-top: 30px;">
+                            @can('create', App\Models\DispositivoEmpleado::class)
+                                <a href="{{ route('admin.dispositivo-empleado.create') }}" class="btn btn-success btn-add-new">
+                                    <i class="voyager-plus"></i> <span>Crear Mapeo</span>
+                                </a>
+                            @endcan
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+@stop
 
-    {{-- Modal de eliminación --}}
+@section('content')
+    <div class="page-content browse container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-9" style="margin-bottom: 0">
+                                <div class="dataTables_length" id="dataTable">
+                                    <label>Mostrar
+                                        <select id="select-paginate" class="form-control input-sm">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select> registros
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-sm-3" style="margin-bottom: 0">
+                                <input type="text" id="search" class="form-control" placeholder="Buscar...">
+                                <br>
+                            </div>
+                        </div>
+                        <div class="row" id="list-container" style="min-height: 120px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal eliminar --}}
     <div class="modal modal-danger fade" tabindex="-1" id="delete_modal" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title"><i class="voyager-trash"></i> ¿Estás seguro de que quieres eliminar esto?</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title"><i class="voyager-trash"></i> ¿Estás seguro de que quieres eliminar?</h4>
                 </div>
                 <div class="modal-footer">
                     <form action="#" id="delete_form" method="POST">
-                        {{ method_field('DELETE') }}
-                        {{ csrf_field() }}
-                        <input type="submit" class="btn btn-danger pull-right delete-confirm" value="Sí, ¡Bórralo!">
+                        @method('DELETE') @csrf
+                        <input type="submit" class="btn btn-danger pull-right delete-confirm" value="Sí, eliminar">
                     </form>
                     <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Cancelar</button>
                 </div>
@@ -51,32 +81,12 @@
     </div>
 @stop
 
-@section('javascript')
-<script>
-    $(document).ready(function() {
-        // Carga inicial
-        loadListView();
-
-        // Paginación y búsqueda
-        $('body').on('click', '.pagination a, .btn-search', function(e) {
-            e.preventDefault();
-            let url = $(this).is('a') ? $(this).attr('href') : '{{ route("admin.dispositivo-empleado.ajax.list") }}';
-            let search = $('#search-input').val();
-            loadListView(url, { search: search });
+@push('javascript')
+    <script>
+        $(document).ready(function () {
+            // Script para auto-cerrar alertas
+            setTimeout(() => $('.auto-dismiss').fadeOut('slow', (el) => $(el).remove()), 5000);
         });
-
-        // Modal de eliminación
-        $('body').on('click', '.delete', function (e) {
-            var form = $('#delete_form')[0];
-            form.action = '{{ route("admin.dispositivo-empleado.destroy", ["map" => "__id"]) }}'.replace('__id', $(this).data('id'));
-        });
-
-        function loadListView(url = '{{ route("admin.dispositivo-empleado.ajax.list") }}', params = {}) {
-            $('#list-view').html('<p class="text-center"><i class="voyager-watch"></i> Cargando...</p>');
-            $.get(url, params, function (data) {
-                $('#list-view').html(data);
-            });
-        }
-    });
-</script>
-@stop
+    </script>
+    @include('admin.partials.list-browse-script', ['listUrl' => route('admin.dispositivo-empleado.ajax.list')])
+@endpush

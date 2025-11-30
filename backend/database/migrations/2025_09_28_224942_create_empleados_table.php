@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('telefono', 20)->nullable();
             $table->text('direccion')->nullable();
             $table->date('fecha_contratacion');
-            $table->enum('tipo_contrato', ['indefinido', 'temporal', 'prácticas']);
+            $table->enum('tipo_contrato', ['indefinido', 'plazo_fijo', 'servicios']);
             $table->enum('estado', ['activo', 'inactivo', 'vacaciones', 'licencia'])->default('activo');
             $table->string('foto_perfil')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', ($departamento->exists ?? false) ? 'Editar Departamento' : 'Agregar Departamento')
+@section('page_title', (isset($departamento) && $departamento->exists) ? 'Editar Departamento' : 'Agregar Departamento')
 
 @section('content')
 <div class="page-content container-fluid">
@@ -11,19 +11,17 @@
         </div>
     @endif
 
-    <form action="{{ ($departamento->exists ?? false)
-            ? route('admin.departamentos.update', $departamento)
-            : route('admin.departamentos.store') }}"
+    <form action="{{ (isset($departamento) && $departamento->exists) ? route('admin.departamentos.update', $departamento) : route('admin.departamentos.store') }}"
           method="POST"
           id="departamento-form">
         @csrf
-        @if($departamento->exists ?? false) @method('PUT') @endif
+        @if(isset($departamento) && $departamento->exists) @method('PUT') @endif
 
         <div class="panel panel-bordered panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="voyager-categories"></i>
-                    {{ ($departamento->exists ?? false) ? 'Editar' : 'Agregar' }} Departamento
+                    {{ (isset($departamento) && $departamento->exists) ? 'Editar' : 'Agregar' }} Departamento
                 </h3>
             </div>
 
@@ -127,7 +125,7 @@
                     <i class="voyager-angle-left"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="voyager-check"></i> {{ ($departamento->exists ?? false) ? 'Actualizar' : 'Guardar' }}
+                    <i class="voyager-check"></i> {{ (isset($departamento) && $departamento->exists) ? 'Actualizar' : 'Guardar' }}
                 </button>
             </div>
         </div>

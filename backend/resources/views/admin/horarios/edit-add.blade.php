@@ -245,34 +245,14 @@
 @section('javascript')
 <script>
     $(document).ready(function () {
+        // Script para auto-cerrar las alertas de sesión después de 5 segundos
         setTimeout(function() {
             $('.auto-dismiss').fadeOut('slow', function() { $(this).remove(); });
         }, 5000);
-        $('.auto-dismiss .close').click(function(e) {
-            e.preventDefault();
-            $(this).closest('.alert').fadeOut('slow', function() { $(this).remove(); });
-        });
 
-        // Auto-trim
+        // Auto-trim del nombre del horario al perder el foco para mejorar la experiencia de usuario
         $('#nombre_horario').on('blur', function () {
             $(this).val($(this).val().trim());
-        });
-
-        // Validación básica antes de enviar
-        $('#horario-form').on('submit', function () {
-            const nombre = $('#nombre_horario').val().trim();
-            $('#nombre_horario').val(nombre);
-            if (!nombre) {
-                alert('El nombre del horario es obligatorio');
-                $('#nombre_horario').focus();
-                return false;
-            }
-
-            // Al menos un día marcado
-            if ($('input[name="dias_laborales[]"]:checked').length === 0) {
-                alert('Selecciona al menos un día laboral');
-                return false;
-            }
         });
     });
 </script>

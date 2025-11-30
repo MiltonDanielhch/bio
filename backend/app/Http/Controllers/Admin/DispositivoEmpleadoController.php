@@ -9,8 +9,8 @@ use App\Models\Dispositivo;
 use App\Models\DispositivoEmpleado;
 use App\Models\Empleado; // Usar el modelo Empleado
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreDispositivoEmpleadoRequest;
+use App\Http\Requests\UpdateDispositivoEmpleadoRequest;
 
 class DispositivoEmpleadoController extends Controller
 {
@@ -24,6 +24,12 @@ class DispositivoEmpleadoController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        // La autorización se maneja dentro de cada método o por el Trait ManagesCrud, no en el constructor.
+    }
+
+    public function index()
+    {
+        return view($this->browseView);
     }
 
     protected function applySearch(Builder $query, string $search): Builder
@@ -35,6 +41,7 @@ class DispositivoEmpleadoController extends Controller
 
     public function create()
     {
+        // La autorización se verifica usando la clase del modelo.
         $this->authorize('create', DispositivoEmpleado::class);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::activos()->orderBy('nombre_dispositivo')->get();
@@ -45,25 +52,12 @@ class DispositivoEmpleadoController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreDispositivoEmpleadoRequest $request)
     {
         $this->authorize('create', DispositivoEmpleado::class);
-        $validated = $request->validate([
-            'empleado_id' => 'required|exists:empleados,id',
-            'dispositivo_id' => 'required|exists:dispositivos,id',
-            'zk_user_id' => [
-                'required',
-                'integer',
-                Rule::unique('dispositivo_empleado')->where(function ($query) use ($request) {
-                    return $query->where('dispositivo_id', $request->dispositivo_id);
-                }),
-            ],
-        ], [
-            'zk_user_id.unique' => 'El ID de usuario ya está en uso en este dispositivo.'
-        ]);
-
+        $validated = $request->validated();
         $validated['estado_sincronizacion'] = 'sincronizado'; // Valor por defecto
-        DispositivoEmpleado::create($validated);
+        $this->model::create($validated);
 
         return redirect()->route('admin.dispositivo-empleado.index')
             ->with(['message' => 'Mapeo creado exitosamente.', 'alert-type' => 'success']);
@@ -71,29 +65,18 @@ class DispositivoEmpleadoController extends Controller
 
     public function edit(DispositivoEmpleado $map)
     {
+        // La autorización se verifica sobre la instancia específica que se va a editar.
         $this->authorize('update', $map);
         $empleados = Empleado::where('estado', 'activo')->orderBy('nombres')->get();
         $dispositivos = Dispositivo::activos()->orderBy('nombre_dispositivo')->get();
         return view('admin.dispositivo_empleado.edit-add', compact('map', 'empleados', 'dispositivos'));
     }
 
-    public function update(Request $request, DispositivoEmpleado $map)
+    public function update(UpdateDispositivoEmpleadoRequest $request, DispositivoEmpleado $map)
     {
+        // Se verifica la autorización antes de realizar la actualización.
         $this->authorize('update', $map);
-        $validated = $request->validate([
-            'empleado_id' => 'required|exists:empleados,id',
-            'dispositivo_id' => 'required|exists:dispositivos,id',
-            'zk_user_id' => [
-                'required',
-                'integer',
-                Rule::unique('dispositivo_empleado')->where(function ($query) use ($request) {
-                    return $query->where('dispositivo_id', $request->dispositivo_id);
-                })->ignore($map->id),
-            ],
-        ], [
-            'zk_user_id.unique' => 'El ID de usuario ya está en uso en este dispositivo.'
-        ]);
-
+        $validated = $request->validated();
         $map->update($validated);
 
         return redirect()->route('admin.dispositivo-empleado.index')
@@ -102,15 +85,11 @@ class DispositivoEmpleadoController extends Controller
 
     public function destroy(DispositivoEmpleado $map)
     {
+        // Se verifica la autorización antes de eliminar.
         $this->authorize('delete', $map);
-        try {
-            $map->delete();
-            return redirect()->route('admin.dispositivo-empleado.index')
-                ->with(['message' => 'Mapeo eliminado exitosamente.', 'alert-type' => 'success']);
-        } catch (\Exception $e) {
-            Log::error("Error al eliminar mapeo {$map->id}: " . $e->getMessage());
-            return redirect()->route('admin.dispositivo-empleado.index')
-                ->with(['message' => 'Error al eliminar el mapeo.', 'alert-type' => 'error']);
-        }
+        $map->delete();
+
+        return redirect()->route('admin.dispositivo-empleado.index')
+            ->with(['message' => 'Mapeo eliminado exitosamente.', 'alert-type' => 'success']);
     }
 }

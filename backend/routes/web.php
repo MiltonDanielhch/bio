@@ -77,8 +77,8 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
     Route::resource('dispositivos', DispositivoController::class)->names('admin.dispositivos');
 
     // Mapeo Dispositivo <-> Empleado
-    Route::get('dispositivo-empleado/ajax/list', [\App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'list'])->name('admin.dispositivo-empleado.ajax.list');
-    Route::resource('dispositivo-empleado', \App\Http\Controllers\Admin\DispositivoEmpleadoController::class)->except(['show'])->names('admin.dispositivo-empleado');
+    Route::get('dispositivo-empleado/ajax/list', [App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'list'])->name('admin.dispositivo-empleado.ajax.list');
+    Route::resource('dispositivo-empleado', App\Http\Controllers\Admin\DispositivoEmpleadoController::class)->except(['show'])->names('admin.dispositivo-empleado');
 
     // Tipos de Incidencia
     Route::get('tipos-incidencia/ajax/list', [TipoIncidenciaController::class, 'list'])->name('admin.tipos-incidencia.ajax.list');

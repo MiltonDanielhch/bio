@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', 'Reportes de Asistencia')
+@section('page_title', 'Asignaciones de Horario')
 
 @section('page_header')
     <div class="container-fluid">
@@ -19,13 +19,13 @@
                     <div class="panel-body" style="padding: 0;">
                         <div class="col-md-8" style="padding: 0;">
                             <h1 class="page-title">
-                                <i class="voyager-chart"></i> Reportes de Asistencia
+                                <i class="voyager-calendar"></i> Asignaciones de Horario
                             </h1>
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px;">
-                            @can('create', App\Models\ReporteAsistencia::class)
-                                <a href="{{ route('admin.reportes-asistencia.create') }}" class="btn btn-success">
-                                    <i class="voyager-plus"></i> Nuevo Reporte
+                            @can('create', App\Models\AsignacionHorario::class)
+                                <a href="{{ route('admin.asignacion-horarios.create') }}" class="btn btn-success">
+                                    <i class="voyager-plus"></i> Nueva Asignación
                                 </a>
                             @endcan
                         </div>
@@ -57,11 +57,11 @@
                             </div>
                         </div>
                         <div class="col-sm-3" style="margin-bottom: 0">
-                            <input type="text" id="input-search" class="form-control" placeholder="Buscar...">
+                            <input type="text" id="search" class="form-control" placeholder="Buscar...">
                             <br>
                         </div>
                     </div>
-                    <div class="row" id="div-results" style="min-height: 120px"></div>
+                    <div class="row" id="list-container" style="min-height: 120px"></div>
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title"><i class="voyager-trash"></i> ¿Desea eliminar este reporte?</h4>
+                <h4 class="modal-title"><i class="voyager-trash"></i> ¿Estás seguro de que quieres eliminar?</h4>
             </div>
             <div class="modal-footer">
                 <form action="#" id="delete_form" method="POST">
@@ -94,85 +94,15 @@
 <style>
     .select2-container{width:100%!important}
     .badge{font-size:100%}
-    .badge-success{background-color:#28a745}
-    .badge-primary{background-color:#007bff}
-    .badge-warning{background-color:#ffc107;color:#212529}
-    .badge-danger{background-color:#dc3545}
-    .badge-default{background-color:#6c757cd9}
-
-    .loading-icon {
-        animation: spin 1.5s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
 </style>
 @stop
 
 @push('javascript')
 <script>
-    let countPage = 10;
-
     $(document).ready(function () {
-        setTimeout(function() {
-            $('.auto-dismiss').fadeOut('slow', function() { $(this).remove(); });
-        }, 5000);
-        $('.auto-dismiss .close').click(function(e) {
-            e.preventDefault();
-            $(this).closest('.alert').fadeOut('slow', function() { $(this).remove(); });
-        });
-
-        list();
-
-        $('#input-search').on('keyup', function (e) {
-            if (e.keyCode === 13) list(1);
-        });
-        let searchTimeout;
-        $('#input-search').on('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => list(1), 500);
-        });
-
-        $('#select-paginate').change(function () {
-            countPage = $(this).val();
-            list(1);
-        });
+        // Script para auto-cerrar alertas
+        setTimeout(() => $('.auto-dismiss').fadeOut('slow', (el) => $(el).remove()), 5000);
     });
-
-    function deleteItem(url, nombre) {
-        $('#delete_form').attr('action', url);
-        $('.modal-title').html('<i class="voyager-trash"></i> ¿Eliminar la empresa "<strong>' + nombre + '</strong>"?');
-    }
-
-    function list(page = 1) {
-        let url = '{{ url("admin/empresas/ajax/list") }}';
-        let search = $('#input-search').val()?.trim() || '';
-
-        $('#div-results').html(`
-            <div class="text-center" style="padding: 40px">
-                <i class="voyager-refresh voyager-2x loading-icon"></i><br>Cargando...
-            </div>
-        `);
-
-        $.ajax({
-            url: `${url}?search=${encodeURIComponent(search)}&paginate=${countPage}&page=${page}`,
-            type: 'get',
-            success: function (response) {
-                $('#div-results').html(response);
-            },
-            error: function (xhr) {
-                console.error(xhr);
-                $('#div-results').html(`
-                    <div class="alert alert-danger text-center">
-                        <i class="voyager-warning"></i><br>Error al cargar los datos.<br>
-                        <button onclick="list(${page})" class="btn btn-xs btn-default mt-2">Reintentar</button>
-                    </div>
-                `);
-            }
-        });
-    }
 </script>
+@include('admin.partials.list-browse-script', ['listUrl' => route('admin.asignacion-horarios.ajax.list')])
 @endpush
-
-
