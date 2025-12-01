@@ -32,8 +32,12 @@ Route::redirect('/', 'admin');
 // Grupo principal con middleware personalizado
 Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
 
+    // Sobrescribimos la ruta del dashboard de Voyager para usar nuestro controlador personalizado.
+    // Debe estar ANTES de Voyager::routes() para tener prioridad.
+
     // Rutas de Voyager (no tocar)
     Voyager::routes();
+    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('voyager.dashboard');
 
     // ───────────────── RUTAS DE RECURSOS REFACTORIZADAS ─────────────────
 

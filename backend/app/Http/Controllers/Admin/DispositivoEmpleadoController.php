@@ -29,7 +29,12 @@ class DispositivoEmpleadoController extends Controller
 
     public function index()
     {
-        return view($this->browseView);
+        // Obtenemos los dispositivos activos para poblar el filtro dropdown.
+        $dispositivos = Dispositivo::activos()->orderBy('nombre_dispositivo')->get();
+
+        return view($this->browseView, [
+            'dispositivos' => $dispositivos,
+        ]);
     }
 
     protected function applySearch(Builder $query, string $search): Builder
@@ -37,6 +42,22 @@ class DispositivoEmpleadoController extends Controller
         return $query->where('zk_user_id', 'like', "%$search%")
             ->orWhereHas('empleado', fn($q) => $q->where('nombres', 'like', "%$search%")->orWhere('apellidos', 'like', "%$search%"))
             ->orWhereHas('dispositivo', fn($q) => $q->where('nombre_dispositivo', 'like', "%$search%"));
+    }
+
+    /**
+     * Aplica los filtros avanzados a la consulta.
+     * Este método es llamado por el método `list` del Trait `ManagesCrud`.
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    protected function applyFilters(Builder $query, Request $request): Builder
+    {
+        if ($request->has('dispositivo_id') && $request->dispositivo_id != '') {
+            $query->where('dispositivo_id', $request->dispositivo_id);
+        }
+        return $query;
     }
 
     public function create()

@@ -147,6 +147,9 @@ return [
 
         ],
 
+        // Desactiva las rutas del dashboard de Voyager para usar una personalizada.
+        'routes' => false,
+
     ],
 
     /*

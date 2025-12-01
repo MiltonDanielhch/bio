@@ -61,6 +61,20 @@ class DispositivosTableSeeder extends Seeder
                 'direccion_ip'       => '10.10.5.201',
                 'ubicacion'          => 'Acceso oficina provincial – San Borja',
             ],
+            /* 6 Dispositivo de desarrollo local */
+            [
+                'sucursal_id'        => $sucursales->firstWhere('ciudad', 'Trinidad')->id,
+                'nombre_dispositivo' => 'zkteco',
+                'tipo'               => 'huella_facial',
+                'numero_serie'       => '6236151200097',
+                'direccion_ip'       => '192.168.14.203',
+                'puerto'             => 4370,
+                'password'           => 123456, // Contraseña específica para este dispositivo
+                'ubicacion'          => 'trinidad',
+                'estado'             => 'activo',
+                'version_firmware'   => null, // No se especifica en los detalles
+            ],
+
         ];
 
         foreach ($dispositivos as $d) {
@@ -71,12 +85,12 @@ class DispositivosTableSeeder extends Seeder
                     'nombre_dispositivo' => $d['nombre_dispositivo'],
                     'tipo'               => $d['tipo'],
                     'direccion_ip'       => $d['direccion_ip'],
-                    'puerto'             => 4370,
-                    'password'           => 0,
+                    'puerto'             => $d['puerto'] ?? 4370, // Usa el puerto del array o el default 4370
+                    'password'           => $d['password'] ?? 0, // Usa la contraseña del array o el default 0
                     'ubicacion'          => $d['ubicacion'],
-                    'estado'             => 'activo',
+                    'estado'             => $d['estado'] ?? 'activo',
                     'ultima_conexion'    => now(),
-                    'version_firmware'   => 'Ver 6.60 Apr 28 2023',
+                    'version_firmware'   => $d['version_firmware'] ?? 'Ver 6.60 Apr 28 2023',
                     'creado_por'         => 1,
                     'ultimo_user_id'     => 0,
                 ]

@@ -35,7 +35,7 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         <div class="row">
-                            <div class="col-sm-9" style="margin-bottom: 0">
+                            <div class="col-sm-4" style="margin-bottom: 0">
                                 <div class="dataTables_length" id="dataTable">
                                     <label>Mostrar
                                         <select id="select-paginate" class="form-control input-sm">
@@ -43,7 +43,19 @@
                                             <option value="25">25</option>
                                             <option value="50">50</option>
                                             <option value="100">100</option>
-                                        </select> registros
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-sm-5">
+                                <div id="dataTable_filter" class="dataTables_filter">
+                                    <label>Filtrar por Dispositivo:
+                                        <select id="filter-dispositivo" class="form-control input-sm">
+                                            <option value="">-- Todos los Dispositivos --</option>
+                                            @foreach($dispositivos as $dispositivo)
+                                                <option value="{{ $dispositivo->id }}">{{ $dispositivo->nombre_dispositivo }}</option>
+                                            @endforeach
+                                        </select>
                                     </label>
                                 </div>
                             </div>
@@ -86,6 +98,12 @@
         $(document).ready(function () {
             // Script para auto-cerrar alertas
             setTimeout(() => $('.auto-dismiss').fadeOut('slow', (el) => $(el).remove()), 5000);
+
+            // Cuando el filtro de dispositivo cambie, recargamos la lista.
+            // Este ID debe coincidir con el ID del script parcial.
+            $('#filter-dispositivo').on('change', function() {
+                list(1); // Llama a la función list del script parcial, reseteando a la página 1
+            });
         });
     </script>
     @include('admin.partials.list-browse-script', ['listUrl' => route('admin.dispositivo-empleado.ajax.list')])

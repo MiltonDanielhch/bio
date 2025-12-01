@@ -55,8 +55,19 @@
      */
     function list(page = 1) {
         const search = $('#search').val()?.trim() || '';
-        const fullUrl = `${listUrl}?search=${encodeURIComponent(search)}&paginate=${countPage}&page=${page}`;
 
+        // Construcción de parámetros de URL
+        let urlParams = new URLSearchParams({
+            search: search,
+            paginate: countPage,
+            page: page
+        });
+
+        // Añadimos el filtro de dispositivo si existe en la página
+        const dispositivoId = $('#filter-dispositivo').val();
+        if (dispositivoId) {
+            urlParams.append('dispositivo_id', dispositivoId);
+        }
         // Show loading indicator
         $('#list-container').html(`
             <div class="text-center" style="padding: 40px">
@@ -65,7 +76,8 @@
         `);
 
         $.ajax({
-            url: fullUrl,
+            // Construimos la URL final con todos los parámetros
+            url: `${listUrl}?${urlParams.toString()}`,
             type: 'GET',
             success: response => $('#list-container').html(response),
             error: (xhr) => {
