@@ -20,6 +20,20 @@
             <div class="col-md-12">
                 <div class="panel panel-bordered">
                     <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="col-md-4 pull-right">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="search-input" name="s" placeholder="Buscar por nombre o dispositivo...">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-info btn-search" type="button">
+                                                <i class="voyager-search"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div id="list-view">
                            <p class="text-center"><i class="voyager-watch"></i> Cargando...</p>
                         </div>
@@ -67,7 +81,7 @@
         // Modal de eliminación
         $('body').on('click', '.delete', function (e) {
             var form = $('#delete_form')[0];
-            form.action = '{{ route("admin.registros-asistencia.destroy", ["registro" => "__id"]) }}'.replace('__id', $(this).data('id'));
+            form.action = '{{ route("admin.registros-asistencia.destroy", ["registros_asistencium" => "__id"]) }}'.replace('__id', $(this).data('id'));
         });
 
         function loadListView(url = '{{ route("admin.registros-asistencia.ajax.list") }}', params = {}) {

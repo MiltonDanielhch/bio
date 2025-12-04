@@ -57,14 +57,37 @@ class SyncAttendanceJob implements ShouldQueue
 
             // 2. Procesar y enriquecer los registros
             foreach ($rawRecords as $rawRecord) {
-                // 3. Enriquecer: Traducir zk_user_id a empleado_id
+                // 3. Enriquecer: Traducir uid del dispositivo a empleado_id
                 $empleadoId = DB::table('dispositivo_empleado')
                     ->where('dispositivo_id', $this->dispositivo->id)
-                    ->where('zk_user_id', $rawRecord['user_id'])
+                    ->where('zk_user_id', $rawRecord['uid'])
                     ->value('empleado_id');
 
+                // FALLBACK: Si no se encuentra por UID, intentar buscar por user_id (código de empleado O DNI)
                 if (!$empleadoId) {
-                    Log::warning("No se encontró mapeo para zk_user_id {$rawRecord['user_id']} en el dispositivo {$this->dispositivo->direccion_ip}.");
+                    $empleado = DB::table('empleados')
+                        ->join('dispositivo_empleado', 'empleados.id', '=', 'dispositivo_empleado.empleado_id')
+                        ->where('dispositivo_empleado.dispositivo_id', $this->dispositivo->id)
+                        ->where(function($query) use ($rawRecord) {
+                            $query->where('empleados.codigo_empleado', $rawRecord['user_id'])
+                                  ->orWhere('empleados.dni', $rawRecord['user_id']);
+                        })
+                        ->select('empleados.id', 'dispositivo_empleado.id as pivot_id')
+                        ->first();
+
+                    if ($empleado) {
+                        $empleadoId = $empleado->id;
+                        // Auto-corrección: Actualizar el zk_user_id en la tabla pivot para futuras sincronizaciones
+                        DB::table('dispositivo_empleado')
+                            ->where('id', $empleado->pivot_id)
+                            ->update(['zk_user_id' => $rawRecord['uid']]);
+                        
+                        Log::info("Auto-corrección: Mapeado empleado {$empleadoId} por código '{$rawRecord['user_id']}' y actualizado zk_user_id a {$rawRecord['uid']}.");
+                    }
+                }
+
+                if (!$empleadoId) {
+                    Log::warning("No se encontró mapeo para uid {$rawRecord['uid']} (user_id: {$rawRecord['user_id']}) en el dispositivo {$this->dispositivo->direccion_ip}.");
                     continue; // Saltar si no hay mapeo
                 }
 

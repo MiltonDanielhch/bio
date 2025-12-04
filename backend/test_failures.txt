@@ -1,0 +1,162 @@
+﻿
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+   PASS  Tests\Unit\ExampleTest
+  Ô£ô that true is true               0.01s  
+
+   FAIL  Tests\Feature\AsignacionHorarioCrudTest
+  Ô¿» admin can assign horario to emÔÇª 0.85s  
+  Ô¿» admin can update asignacion     0.18s  
+
+   PASS  Tests\Feature\DepartamentoCrudTest
+  Ô£ô admin can create departamento   0.16s  
+  Ô£ô admin can update departamento   0.13s  
+
+   PASS  Tests\Feature\DispositivoControllerTest
+  Ô£ô sync now dispatches job         0.13s  
+  Ô£ô test connection uses zk servicÔÇª 0.16s  
+
+   PASS  Tests\Feature\DispositivoEmpleadoCrudTest
+  Ô£ô admin can store new dispositivÔÇª 0.17s  
+  Ô£ô store fails if zk user id is nÔÇª 0.17s  
+
+   PASS  Tests\Feature\EmpleadoCrudTest
+  Ô£ô admin can create empleado       0.15s  
+  Ô£ô codigo empleado must be uniqueÔÇª 0.14s  
+
+   FAIL  Tests\Feature\EmpresaCrudTest
+  Ô¿» admin can create empresa        0.17s  
+  Ô¿» admin can update empresa        0.12s  
+  Ô£ô admin can delete empresa        0.11s  
+
+   FAIL  Tests\Feature\HorarioCrudTest
+  Ô¿» admin can create horario        0.13s  
+  Ô¿» admin can update horario        0.11s  
+
+   PASS  Tests\Feature\SucursalCrudTest
+  Ô£ô admin can create sucursal       0.09s  
+  Ô£ô sucursal requires empresa id    0.09s  
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\AsignacionHoraÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/asignacion-horarios'
++'http://localhost'
+
+  at tests\Feature\AsignacionHorarioCrudTest.php:51
+     47Ôûò 
+     48Ôûò         $response = $this->actingAs($this->adminUser)
+     49Ôûò             ->post(route('admin.asignacion-horarios.store'), $data);
+     50Ôûò 
+  Ô×£  51Ôûò         $response->assertRedirect(route('admin.asignacion-horarios.index'));
+     52Ôûò         $this->assertDatabaseHas('asignacion_horarios', [
+     53Ôûò             'empleado_id' => $this->empleado->id,
+     54Ôûò             'horario_id' => $this->horario->id,
+     55Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\AsignacionHoraÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/asignacion-horarios'
++'http://localhost'
+
+  at tests\Feature\AsignacionHorarioCrudTest.php:78
+     74Ôûò 
+     75Ôûò         $response = $this->actingAs($this->adminUser)
+     76Ôûò             ->put(route('admin.asignacion-horarios.update', $asignacion), $data);
+     77Ôûò 
+  Ô×£  78Ôûò         $response->assertRedirect(route('admin.asignacion-horarios.index'));
+     79Ôûò         $this->assertDatabaseHas('asignacion_horarios', [
+     80Ôûò             'id' => $asignacion->id,
+     81Ôûò             'horario_id' => $newHorario->id,
+     82Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\EmpresaCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/empresas'
++'http://localhost'
+
+  at tests\Feature\EmpresaCrudTest.php:45
+     41Ôûò 
+     42Ôûò         $response = $this->actingAs($this->adminUser)
+     43Ôûò             ->post(route('admin.empresas.store'), $data);
+     44Ôûò 
+  Ô×£  45Ôûò         $response->assertRedirect(route('admin.empresas.index'));
+     46Ôûò         $this->assertDatabaseHas('empresas', [
+     47Ôûò             'nombre_empresa' => 'Test Company SA',
+     48Ôûò             'ruc' => '12345678901',
+     49Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\EmpresaCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/empresas'
++'http://localhost'
+
+  at tests\Feature\EmpresaCrudTest.php:67
+     63Ôûò 
+     64Ôûò         $response = $this->actingAs($this->adminUser)
+     65Ôûò             ->put(route('admin.empresas.update', $empresa), $data);
+     66Ôûò 
+  Ô×£  67Ôûò         $response->assertRedirect(route('admin.empresas.index'));
+     68Ôûò         $this->assertDatabaseHas('empresas', [
+     69Ôûò             'id' => $empresa->id,
+     70Ôûò             'nombre_empresa' => 'New Name',
+     71Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\HorarioCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/horarios'
++'http://localhost'
+
+  at tests\Feature\HorarioCrudTest.php:51
+     47Ôûò 
+     48Ôûò         $response = $this->actingAs($this->adminUser)
+     49Ôûò             ->post(route('admin.horarios.store'), $data);
+     50Ôûò 
+  Ô×£  51Ôûò         $response->assertRedirect(route('admin.horarios.index'));
+     52Ôûò         $this->assertDatabaseHas('horarios', [
+     53Ôûò             'nombre_horario' => 'Horario Oficina',
+     54Ôûò             'hora_entrada' => '08:00:00',
+     55Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\HorarioCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/horarios'
++'http://localhost'
+
+  at tests\Feature\HorarioCrudTest.php:78
+     74Ôûò 
+     75Ôûò         $response = $this->actingAs($this->adminUser)
+     76Ôûò             ->put(route('admin.horarios.update', $horario), $data);
+     77Ôûò 
+  Ô×£  78Ôûò         $response->assertRedirect(route('admin.horarios.index'));
+     79Ôûò         $this->assertDatabaseHas('horarios', [
+     80Ôûò             'id' => $horario->id,
+     81Ôûò             'nombre_horario' => 'Updated Schedule',
+     82Ôûò         ]);
+
+
+  Tests:    6 failed, 12 passed (43 assertions)
+  Duration: 3.45s
+

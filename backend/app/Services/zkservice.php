@@ -16,8 +16,8 @@ class ZkService
     public function __construct()
     {
         // Obtiene la configuración desde config/services.php
-        $this->baseUrl = config('services.zkservice.url');
-        $this->apiKey = config('services.zkservice.key');
+        $this->baseUrl = config('services.zkservice.base_url');
+        $this->apiKey = config('services.zkservice.api_key');
 
         if (!$this->baseUrl || !$this->apiKey) {
             Log::error('ZkService: La URL del servicio o la API Key no están configuradas en config/services.php');

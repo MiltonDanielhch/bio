@@ -53,10 +53,22 @@ class Dispositivo extends Model
         return $this->hasMany(DispositivoEmpleado::class);
     }
 
-    public function registrosAsistencia()
+    // Renombrado de 'registrosAsistencia' a 'asistencias' para mayor claridad y consistencia con la vista.
+    public function asistencias()
     {
         return $this->hasMany(RegistroAsistencia::class);
     }
+
+    /**
+     * Los empleados asignados a este dispositivo a través de la tabla pivote.
+     */
+    public function empleados()
+    {
+        return $this->belongsToMany(Empleado::class, 'dispositivo_empleado')
+                    ->withPivot('zk_user_id', 'privilegio') // ¡Importante! Para poder acceder a estos campos
+                    ->withTimestamps();
+    }
+
 
     /* ---------------- scopes ---------------- */
     public function scopeActivos($query)

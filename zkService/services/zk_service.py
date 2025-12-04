@@ -1,5 +1,6 @@
 # app/services/zk_service.py
 from zk import ZK, const
+from zk.user import User as ZKUser
 from zk.exception import ZKError
 import asyncio
 from fastapi import HTTPException
@@ -150,6 +151,48 @@ class DeviceConnection:
         await asyncio.to_thread(self.conn.clear_attendance)
         logger.info(f"Registros de asistencia borrados en {self.ip}.")
 
+    async def set_users(self, users: List[User]) -> None:
+        """
+        Establece una nueva lista de usuarios en el dispositivo.
+        Primero borra todos los usuarios existentes y luego sube los nuevos.
+        """
+        if not self.conn:
+            raise ConnectionError("No hay una conexión activa.")
+
+        logger.info(f"Iniciando sincronización de usuarios para {self.ip}. Borrando usuarios existentes...")
+        
+        # FIX: clear_users() no existe en pyzk. Borramos uno a uno.
+        try:
+            current_users = await asyncio.to_thread(self.conn.get_users)
+            for user in current_users:
+                 await asyncio.to_thread(self.conn.delete_user, uid=user.uid)
+            logger.info(f"Se han borrado {len(current_users)} usuarios existentes.")
+        except Exception as e:
+            logger.warning(f"Error al intentar borrar usuarios antiguos: {e}")
+        logger.info("Usuarios existentes borrados.")
+
+        # Subir usuarios uno por uno al dispositivo
+        uploaded_count = 0
+        for u in users:
+            try:
+                await asyncio.to_thread(
+                    self.conn.set_user,
+                    uid=int(u.uid),
+                    name=u.name,
+                    privilege=const.USER_ADMIN if u.privilege.lower() == 'admin' else const.USER_DEFAULT,
+                    password=u.password or '',
+                    user_id=u.user_id,
+                    group_id=u.group_id or '',
+                    card=int(u.card) if u.card else 0
+                )
+                uploaded_count += 1
+                logger.info(f"Usuario {u.name} (uid={u.uid}) subido correctamente.")
+            except Exception as e:
+                logger.error(f"Error al subir usuario {u.name} (uid={u.uid}): {e}")
+                raise
+                
+        logger.info(f"Se han subido {uploaded_count}/{len(users)} usuarios a {self.ip}.")
+
 
 async def get_attendance_from_device(ip: str, port: int, password: Optional[int] = 0) -> AttendanceResponse:
     """
@@ -228,6 +271,21 @@ async def clear_attendance_from_device(ip: str, port: Optional[int] = None, pass
         raise http_exc
     except Exception as e:
         logger.exception(f"Fallo crítico al borrar asistencia para {ip}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servicio: {e}")
+
+
+async def sync_users_to_device(ip: str, port: int, password: Optional[int], users: List[User]):
+    """
+    Función de servicio para sincronizar (borrar y re-subir) usuarios a un dispositivo.
+    """
+    try:
+        async with DeviceConnection(ip, port, password) as device:
+            await device.set_users(users)
+            return {"status": "ok", "message": f"{len(users)} usuarios sincronizados en {ip}."}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.exception(f"Fallo crítico al sincronizar usuarios para {ip}: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno del servicio: {e}")
 
 async def cleanup_devices():

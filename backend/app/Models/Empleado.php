@@ -99,4 +99,10 @@ class Empleado extends Model
     {
         return $this->hasMany(AsignacionHorario::class);
     }
+    public function dispositivos()
+    {
+        return $this->belongsToMany(Dispositivo::class, 'dispositivo_empleado')
+                    ->withPivot('zk_user_id', 'privilegio')
+                    ->withTimestamps();
+    }
 }

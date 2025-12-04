@@ -78,6 +78,9 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
     Route::get('dispositivos/ajax/list', [DispositivoController::class, 'list'])->name('admin.dispositivos.ajax.list');
     Route::post('dispositivos/{dispositivo}/test-connection', [DispositivoController::class, 'testConnection'])->name('admin.dispositivos.test_connection');
     Route::post('dispositivos/{dispositivo}/sync-now', [DispositivoController::class, 'syncNow'])->name('admin.dispositivos.sync_now');
+    Route::post('dispositivos/{dispositivo}/sync-users', [DispositivoController::class, 'syncUsers'])->name('admin.dispositivos.sync_users')->withTrashed();
+    Route::get('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'assignEmployees'])->name('admin.dispositivos.assign_employees');
+    Route::post('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'storeEmployees'])->name('admin.dispositivos.store_employees');
     Route::resource('dispositivos', DispositivoController::class)->names('admin.dispositivos');
 
     // Mapeo Dispositivo <-> Empleado

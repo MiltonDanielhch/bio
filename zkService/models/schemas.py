@@ -20,6 +20,14 @@ class User(BaseModel):
     group_id: str = ""
     card: int = 0
 
+class UserSyncRequest(BaseModel):
+    """
+    Modelo para la petición de sincronización de usuarios.
+    Contiene la lista de usuarios a establecer en el dispositivo.
+    """
+    users: List[User]
+
+
 class AttendanceRecord(BaseModel):
     """
     Representa un único registro de asistencia (marcación).

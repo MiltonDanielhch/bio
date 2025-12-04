@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Path, Query, Depends
 from typing import List, Optional, Dict, Any
-from models.schemas import AttendanceResponse, User, DeviceInfo
+from models.schemas import AttendanceResponse, User, DeviceInfo, UserSyncRequest
 from services import zk_service
 from background.tasks import device_status
 from dependencies import validate_api_key
@@ -65,3 +65,14 @@ async def clear_attendance(
     password: Optional[int] = Query(0, title="Clave de comunicación del dispositivo")
 ):
     return await zk_service.clear_attendance_from_device(ip, port, password)
+
+@router.post("/{ip}/sync-users",
+             summary="Sincroniza (borra y sube) una lista de usuarios a un dispositivo",
+             description="Este endpoint borra TODOS los usuarios existentes en el dispositivo y sube la nueva lista proporcionada.")
+async def sync_users(
+    request: UserSyncRequest,
+    ip: str = Path(..., title="Dirección IP del dispositivo", regex=r"^\d{1,3}(\.\d{1,3}){3}$"),
+    port: int = Query(4370, title="Puerto del dispositivo"),
+    password: Optional[int] = Query(0, title="Clave de comunicación del dispositivo")
+):
+    return await zk_service.sync_users_to_device(ip, port, password, request.users)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Dispositivo;
 use App\Models\Sucursal;
 use Illuminate\Http\Request;
+use App\Jobs\SyncUsersToDeviceJob;
 use App\Jobs\SyncAttendanceJob;
 use Illuminate\Support\Facades\Log;
 use App\Services\ZkService;
@@ -143,5 +144,105 @@ class DispositivoController extends Controller
             Log::error("Error al despachar job de sincronización para dispositivo {$dispositivo->id}: {$e->getMessage()}");
             return back()->with(['message' => 'Error al iniciar sincronización: ' . $e->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    /**
+     * Encola un trabajo para sincronizar (subir) la lista de usuarios
+     * desde el sistema hacia el dispositivo físico.
+     *
+     * @param  \App\Models\Dispositivo  $dispositivo
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function syncUsers(Dispositivo $dispositivo)
+    {
+        try {
+            // Despacha el Job a la cola
+            SyncUsersToDeviceJob::dispatch($dispositivo);
+
+            // Devuelve al usuario inmediatamente con un mensaje de éxito
+            return back()->with([
+                'message'    => 'La sincronización de usuarios ha sido encolada. Los cambios se reflejarán en el dispositivo en breve.',
+                'alert-type' => 'success',
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error al despachar job de sincronización de usuarios para dispositivo {$dispositivo->id}: {$e->getMessage()}");
+            return back()->with(['message' => 'Error al encolar la tarea de sincronización: ' . $e->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+    /**
+     * Muestra la vista para asignar empleados a un dispositivo.
+     */
+    public function assignEmployees(Dispositivo $dispositivo)
+    {
+        $this->authorize('update', $dispositivo);
+        
+        // Obtener todos los empleados activos
+        $empleados = \App\Models\Empleado::where('estado', 'activo')
+            ->orderBy('nombres')
+            ->get();
+            
+        // Obtener IDs de empleados ya asignados
+        $assignedIds = $dispositivo->empleados()->pluck('empleados.id')->toArray();
+        
+        return view('admin.dispositivos.assign_employees', compact('dispositivo', 'empleados', 'assignedIds'));
+    }
+
+    /**
+     * Guarda la asignación de empleados a un dispositivo.
+     */
+    public function storeEmployees(Request $request, Dispositivo $dispositivo)
+    {
+        $this->authorize('update', $dispositivo);
+        
+        $request->validate([
+            'empleados' => 'array',
+            'empleados.*' => 'exists:empleados,id',
+        ]);
+
+        $empleadosIds = $request->input('empleados', []);
+        
+        // Sincronizar (esto agrega los nuevos y elimina los que no están en la lista)
+        // Pero necesitamos mantener zk_user_id si ya existe para no romper sincronización
+        
+        // Estrategia: 
+        // 1. Obtener asignaciones actuales
+        $currentAssignments = $dispositivo->empleados()->get();
+        
+        // 2. Preparar array para sync
+        $syncData = [];
+        
+        // Obtener el último zk_user_id usado en este dispositivo para asignar nuevos
+        $maxZkId = \Illuminate\Support\Facades\DB::table('dispositivo_empleado')
+            ->where('dispositivo_id', $dispositivo->id)
+            ->max('zk_user_id') ?? 0;
+            
+        foreach ($empleadosIds as $empId) {
+            // Verificar si ya estaba asignado
+            $existing = $currentAssignments->firstWhere('id', $empId);
+            
+            if ($existing) {
+                // Mantener datos existentes
+                $syncData[$empId] = [
+                    'zk_user_id' => $existing->pivot->zk_user_id,
+                    'privilegio' => $existing->pivot->privilegio,
+                    'estado' => 'activo'
+                ];
+            } else {
+                // Nuevo empleado, asignar nuevo zk_user_id
+                $maxZkId++;
+                $syncData[$empId] = [
+                    'zk_user_id' => $maxZkId,
+                    'privilegio' => 'usuario', // Por defecto
+                    'estado' => 'activo',
+                    'estado_sincronizacion' => 'pendiente' // Para que se sincronice luego
+                ];
+            }
+        }
+        
+        $dispositivo->empleados()->sync($syncData);
+
+        return redirect()->route('admin.dispositivos.index')
+            ->with(['message' => 'Empleados asignados exitosamente.', 'alert-type' => 'success']);
     }
 }

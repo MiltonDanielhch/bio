@@ -1,0 +1,51 @@
+﻿
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+   FAIL  Tests\Feature\EmpresaCrudTest
+  Ô¿» admin can create empresa        0.63s  
+  Ô¿» admin can update empresa        0.09s  
+  Ô£ô admin can delete empresa        0.08s  
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\EmpresaCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/empresas'
++'http://localhost'
+
+  at tests\Feature\EmpresaCrudTest.php:45
+     41Ôûò 
+     42Ôûò         $response = $this->actingAs($this->adminUser)
+     43Ôûò             ->post(route('admin.empresas.store'), $data);
+     44Ôûò 
+  Ô×£  45Ôûò         $response->assertRedirect(route('admin.empresas.index'));
+     46Ôûò         $this->assertDatabaseHas('empresas', [
+     47Ôûò             'nombre_empresa' => 'Test Company SA',
+     48Ôûò             'ruc' => '12345678901',
+     49Ôûò         ]);
+
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ  
+   FAILED  Tests\Feature\EmpresaCrudTesÔÇª   
+  Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'http://localhost/admin/empresas'
++'http://localhost'
+
+  at tests\Feature\EmpresaCrudTest.php:67
+     63Ôûò 
+     64Ôûò         $response = $this->actingAs($this->adminUser)
+     65Ôûò             ->put(route('admin.empresas.update', $empresa), $data);
+     66Ôûò 
+  Ô×£  67Ôûò         $response->assertRedirect(route('admin.empresas.index'));
+     68Ôûò         $this->assertDatabaseHas('empresas', [
+     69Ôûò             'id' => $empresa->id,
+     70Ôûò             'nombre_empresa' => 'New Name',
+     71Ôûò         ]);
+
+
+  Tests:    2 failed, 1 passed (7 assertions)
+  Duration: 1.02s
+

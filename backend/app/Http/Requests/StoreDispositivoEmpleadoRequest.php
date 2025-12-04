@@ -27,13 +27,13 @@ class StoreDispositivoEmpleadoRequest extends FormRequest
             'empleado_id' => [
                 'required',
                 'exists:empleados,id',
-                Rule::unique('dispositivo_empleado')->where('dispositivo_id', $this->dispositivo_id)
+                Rule::unique('dispositivo_empleado')->where('dispositivo_id', $this->input('dispositivo_id'))
             ],
             'dispositivo_id' => 'required|exists:dispositivos,id',
             'zk_user_id' => [
                 'required',
                 'integer',
-                Rule::unique('dispositivo_empleado')->where('dispositivo_id', $this->dispositivo_id)
+                Rule::unique('dispositivo_empleado')->where('dispositivo_id', $this->input('dispositivo_id'))
             ],
         ];
     }

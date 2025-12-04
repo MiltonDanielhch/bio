@@ -33,6 +33,33 @@
                                 <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm">Editar</span>
                             </a>
                         @endcan
+                        
+                        {{-- Botón: Asignar Empleados --}}
+                        @can('update', $item)
+                            <a href="{{ route('admin.dispositivos.assign_employees', $item->id) }}" title="Asignar Empleados" class="btn btn-sm btn-dark" style="background-color: #333; color: #fff;">
+                                <i class="voyager-people"></i> <span class="hidden-xs hidden-sm">Empleados</span>
+                            </a>
+                        @endcan
+                        {{-- Botón: Sincronizar Asistencias (Dispositivo → Sistema) --}}
+                        @can('update', $item)
+                            <form action="{{ route('admin.dispositivos.sync_now', $item->id) }}" method="POST" style="display: inline-block;">
+                                @csrf
+                                <button type="submit" title="Sincronizar Asistencias" class="btn btn-sm btn-info">
+                                    <i class="voyager-download"></i> <span class="hidden-xs hidden-sm">Asistencias</span>
+                                </button>
+                            </form>
+                        @endcan
+                        
+                        {{-- Botón: Sincronizar Usuarios (Sistema → Dispositivo) --}}
+                        @can('update', $item)
+                            <form action="{{ route('admin.dispositivos.sync_users', $item->id) }}" method="POST" style="display: inline-block;">
+                                @csrf
+                                <button type="submit" title="Sincronizar Usuarios" class="btn btn-sm btn-success">
+                                    <i class="voyager-upload"></i> <span class="hidden-xs hidden-sm">Usuarios</span>
+                                </button>
+                            </form>
+                        @endcan
+                        
                         @can('delete', $item)
                             <button title="Borrar"
                                     class="btn btn-sm btn-danger delete"

@@ -107,7 +107,46 @@
                                 @csrf
                                 <button type="submit" class="btn btn-success"><i class="voyager-refresh"></i> Sincronizar Ahora</button>
                             </form>
+                            <form action="{{ route('admin.dispositivos.sync_users', $dispositivo->id) }}" method="POST" style="display:inline-block; margin-left: 10px;">
+                                @csrf
+                                <button type="submit" class="btn btn-info"><i class="voyager-people"></i> Sincronizar Usuarios</button>
+                            </form>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Nueva sección para mostrar las últimas asistencias del dispositivo --}}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-bordered">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="voyager-logbook"></i> Últimas 10 Asistencias Sincronizadas de este Dispositivo</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Fecha y Hora de Marcación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($dispositivo->asistencias()->latest()->take(10)->get() as $asistencia)
+                                    <tr>
+                                        <td>{{ $asistencia->empleado->full_name ?? 'Empleado no encontrado' }}</td>
+                                        <td>{{ $asistencia->fecha_hora->format('d/m/Y H:i:s') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center">No hay registros de asistencia para este dispositivo.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
