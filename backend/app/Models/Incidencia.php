@@ -54,6 +54,11 @@ class Incidencia extends Model
         return $this->belongsTo(\App\Models\User::class, 'creado_por');
     }
 
+    public function tipoIncidencia()
+    {
+        return $this->belongsTo(TipoIncidencia::class);
+    }
+
     /* ---------------- scopes ---------------- */
     public function scopePendientes($query)
     {

@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', 'Asignaciones de Horario')
+@section('page_title', 'Gestión de Horarios')
 
 @section('page_header')
     <div class="container-fluid">
@@ -17,13 +17,13 @@
                     <div class="panel-body" style="padding: 0;">
                         <div class="col-md-8" style="padding: 0;">
                             <h1 class="page-title">
-                                <i class="voyager-calendar"></i> Asignaciones de Horario
+                                <i class="voyager-clock"></i> Gestión de Horarios
                             </h1>
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px;">
-                            @can('create', App\Models\AsignacionHorario::class)
-                                <a href="{{ route('admin.asignacion-horarios.create') }}" class="btn btn-success">
-                                    <i class="voyager-plus"></i> Nueva Asignación
+                            @can('create', App\Models\Horario::class)
+                                <a href="{{ route('admin.horarios.create') }}" class="btn btn-success">
+                                    <i class="voyager-plus"></i> Nuevo Horario
                                 </a>
                             @endcan
                         </div>
@@ -102,5 +102,5 @@
         setTimeout(() => $('.auto-dismiss').fadeOut('slow', (el) => $(el).remove()), 5000);
     });
 </script>
-@include('admin.partials.list-browse-script', ['listUrl' => route('admin.asignacion-horarios.ajax.list')])
+@include('admin.partials.list-browse-script', ['listUrl' => route('admin.horarios.ajax.list')])
 @endpush

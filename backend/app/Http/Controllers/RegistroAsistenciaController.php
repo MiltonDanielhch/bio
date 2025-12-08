@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Models\RegistroAsistencia;
 use App\Models\Empleado;
 use App\Models\Dispositivo;
 use App\Traits\ManagesCrud;
@@ -11,12 +9,16 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreRegistroAsistenciaRequest;
+use App\Http\Requests\UpdateRegistroAsistenciaRequest;
+use App\Models\RegistroAsistencia;
 
 class RegistroAsistenciaController extends Controller
 {
     use ManagesCrud;
 
     protected $model = RegistroAsistencia::class;
+    protected $readView = 'admin.registros_asistencia.read';
     protected $browseView = 'admin.registros_asistencia.browse';
     protected $listView = 'admin.registros_asistencia.list';
     protected $with = ['empleado', 'dispositivo'];
@@ -53,17 +55,14 @@ class RegistroAsistenciaController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRegistroAsistenciaRequest $request)
     {
-        $this->authorize('create', RegistroAsistencia::class);
-        $data = $this->validateAndPrepareData($request);
-
+        $data = $request->getValidatedData();
         RegistroAsistencia::create($data);
 
         return redirect()->route('admin.registros-asistencia.index')
             ->with(['message' => 'Registro de asistencia creado exitosamente.', 'alert-type' => 'success']);
     }
-
     public function edit(RegistroAsistencia $registro)
     {
         $this->authorize('update', $registro);
@@ -77,10 +76,9 @@ class RegistroAsistenciaController extends Controller
         ]);
     }
 
-    public function update(Request $request, RegistroAsistencia $registro)
+    public function update(UpdateRegistroAsistenciaRequest $request, RegistroAsistencia $registro)
     {
-        $this->authorize('update', $registro);
-        $data = $this->validateAndPrepareData($request);
+        $data = $request->getValidatedData();
 
         $registro->update($data);
 
@@ -100,30 +98,5 @@ class RegistroAsistenciaController extends Controller
             return redirect()->route('admin.registros-asistencia.index')
                 ->with(['message' => 'Error al eliminar el registro de asistencia.', 'alert-type' => 'error']);
         }
-    }
-
-    /**
-     * Valida y prepara los datos del request.
-     */
-    private function validateAndPrepareData(Request $request): array
-    {
-        $validated = $request->validate([
-            'empleado_id' => 'required|exists:empleados,id',
-            'dispositivo_id' => 'required|exists:dispositivos,id',
-            'tipo_marcaje' => 'required|in:entrada,salida,entrada_almuerzo,salida_almuerzo,general',
-            'fecha_local' => 'required|date',
-            'hora_local' => 'required|date_format:H:i:s',
-            'tipo_verificacion' => 'required|in:huella,rostro,tarjeta,manual,clave',
-            'latitud' => 'nullable|numeric|between:-90,90',
-            'longitud' => 'nullable|numeric|between:-180,180',
-            'precision_ubicacion' => 'nullable|numeric',
-            'confianza_verificacion' => 'nullable|numeric',
-            'observaciones' => 'nullable|string',
-        ]);
-
-        // Combinar fecha y hora en un solo campo 'fecha_hora' usando Carbon para más seguridad
-        $validated['fecha_hora'] = Carbon::parse($validated['fecha_local'] . ' ' . $validated['hora_local'])->toDateTimeString();
-
-        return $validated;
     }
 }

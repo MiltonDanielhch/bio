@@ -15,6 +15,7 @@ class TipoIncidenciaController extends Controller
 
     protected $model = TipoIncidencia::class;
     protected $browseView = 'admin.tipos-incidencia.browse';
+    protected $readView = 'admin.tipos-incidencia.read';
     protected $listView = 'admin.tipos-incidencia.list';
 
     public function __construct()

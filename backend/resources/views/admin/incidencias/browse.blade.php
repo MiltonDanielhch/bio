@@ -16,11 +16,11 @@
                             </h1>
                         </div>
                         <div class="col-sm-4 text-right">
-                            @can('add_incidencias')
+                            {{-- @can('add_incidencias') --}}
                             <a href="{{ route('admin.incidencias.create') }}" class="btn btn-success btn-add-new">
                                 <i class="voyager-plus"></i> <span>Registrar Incidencia</span>
                             </a>
-                            @endcan
+                            {{-- @endcan --}}
                         </div>
                     </div>
                     <div class="row" style="margin-top: 20px;">
@@ -72,11 +72,11 @@
 
         list();
 
-        $('#input-search').on('keyup', function (e) {
+        $('#search').on('keyup', function (e) {
             if (e.keyCode === 13) list(1);
         });
         let searchTimeout;
-        $('#input-search').on('input', function() {
+        $('#search').on('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => list(1), 500);
         });
@@ -85,18 +85,24 @@
             countPage = $(this).val();
             list(1);
         });
+
+        $('#list-container').on('click', '.pagination a', function(e) {
+            e.preventDefault();
+            let page = $(this).attr('href').split('page=')[1];
+            list(page);
+        });
     });
 
     function deleteItem(url, nombre) {
         $('#delete_form').attr('action', url);
-        $('.modal-title').html('<i class="voyager-trash"></i> ¿Eliminar la empresa "<strong>' + nombre + '</strong>"?');
+        $('.modal-title').html('<i class="voyager-trash"></i> ¿Eliminar la incidencia "<strong>' + nombre + '</strong>"?');
     }
 
     function list(page = 1) {
-        let url = '{{ url("admin/empresas/ajax/list") }}';
-        let search = $('#input-search').val()?.trim() || '';
+        let url = '{{ route("admin.incidencias.ajax.list") }}';
+        let search = $('#search').val()?.trim() || '';
 
-        $('#div-results').html(`
+        $('#list-container').html(`
             <div class="text-center" style="padding: 40px">
                 <i class="voyager-refresh voyager-2x loading-icon"></i><br>Cargando...
             </div>
@@ -106,11 +112,11 @@
             url: `${url}?search=${encodeURIComponent(search)}&paginate=${countPage}&page=${page}`,
             type: 'get',
             success: function (response) {
-                $('#div-results').html(response);
+                $('#list-container').html(response);
             },
             error: function (xhr) {
                 console.error(xhr);
-                $('#div-results').html(`
+                $('#list-container').html(`
                     <div class="alert alert-danger text-center">
                         <i class="voyager-warning"></i><br>Error al cargar los datos.<br>
                         <button onclick="list(${page})" class="btn btn-xs btn-default mt-2">Reintentar</button>
@@ -121,4 +127,3 @@
     }
 </script>
 @endpush
-

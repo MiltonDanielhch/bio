@@ -41,35 +41,18 @@
                 @endif
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <label for="empresa_id">Empresa <span class="required">*</span></label>
-                            <select name="empresa_id" id="empresa_id" class="form-control @error('empresa_id') is-invalid @enderror" required>
-                                <option value="">-- Seleccione --</option>
-                                @foreach($empresas as $emp)
-                                    <option value="{{ $emp->id }}"
-                                        {{ old('empresa_id', optional($horario)->empresa_id) == $emp->id ? 'selected' : '' }}>
-                                        {{ $emp->nombre_empresa }} ({{ $emp->ruc }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('empresa_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="nombre_horario">Nombre Horario <span class="required">*</span></label>
+                            <label for="nombre">Nombre del Horario <span class="required">*</span></label>
                             <input type="text"
-                                   name="nombre_horario"
-                                   id="nombre_horario"
-                                   class="form-control @error('nombre_horario') is-invalid @enderror"
+                                   name="nombre"
+                                   id="nombre"
+                                   class="form-control @error('nombre') is-invalid @enderror"
                                    placeholder="Ej: Turno Mañana"
                                    maxlength="100"
-                                   value="{{ old('nombre_horario', optional($horario)->nombre_horario) }}"
+                                   value="{{ old('nombre', optional($horario)->nombre) }}"
                                    required>
-                            @error('nombre_horario')
+                            @error('nombre')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -77,7 +60,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="hora_entrada">Hora Entrada <span class="required">*</span></label>
                             <input type="time"
@@ -91,7 +74,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="hora_salida">Hora Salida <span class="required">*</span></label>
                             <input type="time"
@@ -105,95 +88,20 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="form-group">
-                            <label for="tolerancia_entrada">Tolerancia Entrada (min)</label>
+                            <label for="tolerancia_minutos">Tolerancia (minutos)</label>
                             <input type="number"
-                                   name="tolerancia_entrada"
-                                   id="tolerancia_entrada"
-                                   class="form-control @error('tolerancia_entrada') is-invalid @enderror"
+                                   name="tolerancia_minutos"
+                                   id="tolerancia_minutos"
+                                   class="form-control @error('tolerancia_minutos') is-invalid @enderror"
                                    placeholder="5"
                                    min="0"
                                    max="60"
-                                   value="{{ old('tolerancia_entrada', optional($horario)->tolerancia_entrada ?? 5) }}">
-                            @error('tolerancia_entrada')
+                                   value="{{ old('tolerancia_minutos', optional($horario)->tolerancia_minutos ?? 5) }}">
+                            @error('tolerancia_minutos')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="tolerancia_salida">Tolerancia Salida (min)</label>
-                            <input type="number"
-                                   name="tolerancia_salida"
-                                   id="tolerancia_salida"
-                                   class="form-control @error('tolerancia_salida') is-invalid @enderror"
-                                   placeholder="5"
-                                   min="0"
-                                   max="60"
-                                   value="{{ old('tolerancia_salida', optional($horario)->tolerancia_salida ?? 5) }}">
-                            @error('tolerancia_salida')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="hora_entrada_almuerzo">Entrada Almuerzo</label>
-                            <input type="time"
-                                   name="hora_entrada_almuerzo"
-                                   id="hora_entrada_almuerzo"
-                                   class="form-control @error('hora_entrada_almuerzo') is-invalid @enderror"
-                                   value="{{ old('hora_entrada_almuerzo', optional($horario)->hora_entrada_almuerzo) }}">
-                            @error('hora_entrada_almuerzo')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="hora_salida_almuerzo">Salida Almuerzo</label>
-                            <input type="time"
-                                   name="hora_salida_almuerzo"
-                                   id="hora_salida_almuerzo"
-                                   class="form-control @error('hora_salida_almuerzo') is-invalid @enderror"
-                                   value="{{ old('hora_salida_almuerzo', optional($horario)->hora_salida_almuerzo) }}">
-                            @error('hora_salida_almuerzo')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="flexible">Jornada Flexible</label>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           name="flexible"
-                                           id="flexible"
-                                           value="1"
-                                           {{ old('flexible', optional($horario)->flexible) ? 'checked' : '' }}>
-                                    Si
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="nocturno">Jornada Nocturna</label>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           name="nocturno"
-                                           id="nocturno"
-                                           value="1"
-                                           {{ old('nocturno', optional($horario)->nocturno) ? 'checked' : '' }}>
-                                    Si
-                                </label>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,7 +113,7 @@
                             <div class="row">
                                 @php
                                     $dias = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
-                                    $oldDias = old('dias_laborales', optional($horario)->dias_laborales ?? ['lunes','martes','miercoles','jueves','viernes']);
+                                    $oldDias = old('dias_laborales', is_array(optional($horario)->dias_laborales) ? optional($horario)->dias_laborales : ['lunes','martes','miercoles','jueves','viernes']);
                                 @endphp
                                 @foreach($dias as $dia)
                                     <div class="col-md-2">
@@ -251,7 +159,7 @@
         }, 5000);
 
         // Auto-trim del nombre del horario al perder el foco para mejorar la experiencia de usuario
-        $('#nombre_horario').on('blur', function () {
+        $('#nombre').on('blur', function () {
             $(this).val($(this).val().trim());
         });
     });

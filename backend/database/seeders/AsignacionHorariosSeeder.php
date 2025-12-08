@@ -11,13 +11,9 @@ class AsignacionHorariosSeeder extends Seeder
 {
     public function run(): void
     {
-        $adm   = Horario::where('empresa_id', 1)
-                        ->where('nombre_horario', 'Administrativo Gobernación')
-                        ->firstOrFail();
+        $adm   = Horario::where('nombre', 'Administrativo Gobernación')->firstOrFail();
 
-        $reduc = Horario::where('empresa_id', 1)
-                        ->where('nombre_horario', 'Horario Reducido Provincia')
-                        ->firstOrFail();
+        $reduc = Horario::where('nombre', 'Horario Continuo Provincia')->firstOrFail();
 
         Empleado::with('departamento.sucursal')
             ->where('estado', 'activo')

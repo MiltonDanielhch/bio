@@ -13,21 +13,14 @@ return new class extends Migration
     {
         Schema::create('horarios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
-            $table->string('nombre_horario');
+            $table->string('nombre')->unique();
             $table->time('hora_entrada');
             $table->time('hora_salida');
-            $table->time('hora_entrada_almuerzo')->nullable();
-            $table->time('hora_salida_almuerzo')->nullable();
-            $table->integer('tolerancia_entrada')->default(5);
-            $table->integer('tolerancia_salida')->default(5);
+            $table->integer('tolerancia_minutos')->default(5);
             $table->json('dias_laborales');
-            $table->boolean('flexible')->default(false);
-            $table->boolean('nocturno')->default(false);
-            $table->enum('estado', ['activo', 'inactivo'])->default('activo');
             $table->foreignId('creado_por')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            $table->index(['empresa_id']);
+            $table->softDeletes();
         });
     }
 

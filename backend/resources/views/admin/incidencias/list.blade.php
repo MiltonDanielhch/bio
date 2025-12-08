@@ -75,5 +75,3 @@
         <nav class="text-right">{{ $items->links() }}</nav>
     </div>
 </div>
-
-@include('admin.partials.list-pagination-script')

@@ -7,7 +7,7 @@
     <div class="panel panel-bordered panel-primary">
         <div class="panel-heading">
             <h3 class="panel-title">
-                <i class="voyager-clock"></i> Ver Horario: {{ $horario->nombre_horario }}
+                <i class="voyager-clock"></i> Ver Horario: {{ $horario->nombre }}
             </h3>
         </div>
 
@@ -21,12 +21,8 @@
                                 <td>{{ $horario->id }}</td>
                             </tr>
                             <tr>
-                                <th>Empresa</th>
-                                <td>{{ optional($horario->empresa)->nombre_empresa }} ({{ optional($horario->empresa)->ruc }})</td>
-                            </tr>
-                            <tr>
-                                <th>Nombre Horario</th>
-                                <td>{{ $horario->nombre_horario }}</td>
+                                <th>Nombre</th>
+                                <td>{{ $horario->nombre }}</td>
                             </tr>
                             <tr>
                                 <th>Hora Entrada</th>
@@ -37,22 +33,9 @@
                                 <td>{{ \Carbon\Carbon::parse($horario->hora_salida)->format('H:i') }}</td>
                             </tr>
                             <tr>
-                                <th>Almuerzo</th>
-                                <td>
-                                    @if($horario->hora_entrada_almuerzo && $horario->hora_salida_almuerzo)
-                                        {{ \Carbon\Carbon::parse($horario->hora_entrada_almuerzo)->format('H:i') }}
-                                        -
-                                        {{ \Carbon\Carbon::parse($horario->hora_salida_almuerzo)->format('H:i') }}
-                                    @else
-                                        <span class="text-muted">Sin almuerzo definido</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
                                 <th>Tolerancia</th>
                                 <td>
-                                    Entrada: {{ $horario->tolerancia_entrada ?? 0 }} min<br>
-                                    Salida: {{ $horario->tolerancia_salida ?? 0 }} min
+                                    {{ $horario->tolerancia_minutos ?? 0 }} minutos
                                 </td>
                             </tr>
                             <tr>
@@ -65,22 +48,6 @@
                                     @else
                                         <span class="text-muted">Sin días asignados</span>
                                     @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Jornada Flexible</th>
-                                <td>
-                                    <span class="label label-{{ $horario->flexible ? 'success' : 'default' }}">
-                                        {{ $horario->flexible ? 'Sí' : 'No' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Jornada Nocturna</th>
-                                <td>
-                                    <span class="label label-{{ $horario->nocturno ? 'warning' : 'default' }}">
-                                        {{ $horario->nocturno ? 'Sí' : 'No' }}
-                                    </span>
                                 </td>
                             </tr>
                             <tr>

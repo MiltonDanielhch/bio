@@ -16,7 +16,7 @@ class HorarioController extends Controller
     protected $model = Horario::class;
     protected $browseView = 'admin.horarios.browse';
     protected $listView = 'admin.horarios.list';
-    protected $with = ['empresa', 'creador'];
+    protected $with = ['creador'];
 
     public function __construct()
     {
@@ -25,7 +25,7 @@ class HorarioController extends Controller
 
     protected function applySearch(Builder $query, string $search): Builder
     {
-        return $query->when($search, fn($q) => $q->where('nombre_horario', 'like', "%$search%"));
+        return $query->when($search, fn($q) => $q->where('nombre', 'like', "%$search%"));
     }
 
     public function show(Horario $horario)
@@ -37,8 +37,7 @@ class HorarioController extends Controller
     public function create()
     {
         $this->authorize('create', Horario::class);
-        $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
-        return view('admin.horarios.edit-add', ['horario' => new Horario(), 'empresas' => $empresas]);
+        return view('admin.horarios.edit-add', ['horario' => new Horario()]);
     }
 
     public function store(StoreHorarioRequest $request)
@@ -55,8 +54,7 @@ class HorarioController extends Controller
     public function edit(Horario $horario)
     {
         $this->authorize('update', $horario);
-        $empresas = Empresa::where('estado', 'activo')->orderBy('nombre_empresa')->get();
-        return view('admin.horarios.edit-add', compact('horario', 'empresas'));
+        return view('admin.horarios.edit-add', compact('horario'));
     }
 
     public function update(UpdateHorarioRequest $request, Horario $horario)

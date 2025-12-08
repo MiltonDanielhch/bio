@@ -4,10 +4,9 @@
             <thead>
                 <tr>
                     <th style="width: 5%">#</th>
-                    <th>Nombre del Horario</th>
-                    <th>Empresa</th>
-                    <th>Detalles</th>
-                    <th>Estado</th>
+                    <th>Nombre</th>
+                    <th>Jornada</th>
+                    <th>Días Laborales</th>
                     <th class="text-right">Acciones</th>
                 </tr>
             </thead>
@@ -15,20 +14,20 @@
                 @forelse($items as $h)
                 <tr>
                     <td>{{ $h->id }}</td>
-                    <td>{{ $h->nombre_horario }}</td>
-                    <td>{{ optional($h->empresa)->nombre_empresa }}</td>
+                    <td>{{ $h->nombre }}</td>
                     <td>
                         <small>
-                            Entrada: {{ \Carbon\Carbon::parse($h->hora_entrada)->format('h:i A') }} |
-                            Salida: {{ \Carbon\Carbon::parse($h->hora_salida)->format('h:i A') }}
+                            {{ \Carbon\Carbon::parse($h->hora_entrada)->format('H:i') }} - {{ \Carbon\Carbon::parse($h->hora_salida)->format('H:i') }}
+                            <br>
+                            Tolerancia: {{ $h->tolerancia_minutos }} min
                         </small>
                     </td>
                     <td>
-                        <span class="label label-{{ $h->estado == 'activo' ? 'success' : 'default' }}">
-                            {{ ucfirst($h->estado) }}
-                        </span>
+                        @foreach($h->dias_laborales as $dia)
+                            <span class="badge badge-info" style="background-color: #1E90FF;">{{ ucfirst(substr($dia, 0, 2)) }}</span>
+                        @endforeach
                     </td>
-                    <td class="text-right" style="width: 30%">
+                    <td class="text-right" style="width: 25%">
                         @can('view', $h)
                             <a href="{{ route('admin.horarios.show', $h) }}" title="Ver" class="btn btn-sm btn-warning">
                                 <i class="voyager-eye"></i> Ver
@@ -43,7 +42,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-danger"
                                     title="Borrar"
-                                    onclick="deleteItem('{{ route('admin.horarios.destroy', $h) }}', '{{ $h->nombre_horario }}')"
+                                    onclick="deleteItem('{{ route('admin.horarios.destroy', $h) }}', '{{ $h->nombre }}')"
                                     data-toggle="modal"
                                     data-target="#delete_modal">
                                 <i class="voyager-trash"></i> Borrar
