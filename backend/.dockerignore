@@ -1,0 +1,12 @@
+# Ignorar dependencias de Composer, se instalan dentro del contenedor.
+vendor/
+
+# Ignorar dependencias de Node.js
+node_modules/
+
+# ¡LA LÍNEA CLAVE! Ignorar el enlace simbólico de storage.
+public/storage
+
+# Archivos de entorno y logs locales
+.env
+*.log

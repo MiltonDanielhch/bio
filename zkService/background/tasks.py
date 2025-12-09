@@ -44,10 +44,13 @@ async def check_device(ip: str):
     device_status[ip] = status_report
 
 async def monitor_devices():
-    logger.info(f"Iniciando monitoreo de dispositivos: {settings.KNOWN_DEVICES}")
     while True:
+        logger.info(f"Iniciando ciclo de verificación de estado para: {settings.KNOWN_DEVICES}")
         # Crea y ejecuta una tarea de chequeo para cada IP en paralelo
-        await asyncio.gather(*(check_device(ip) for ip in settings.KNOWN_DEVICES if ip))
+        # El filtro 'if ip' asegura que no se procesen entradas vacías en la lista de dispositivos.
+        tasks = [check_device(ip) for ip in settings.KNOWN_DEVICES if ip]
+        await asyncio.gather(*tasks)
+        logger.info("Ciclo de verificación de estado completado.")
         await asyncio.sleep(settings.DEVICE_CHECK_INTERVAL)
 
 async def start_background_tasks():

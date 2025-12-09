@@ -1,23 +1,69 @@
-version: '3.8'
 
 services:
+  # ---------------------------------------------------
+  # Servidor Web Nginx (Punto de Entrada)
+  # ---------------------------------------------------
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: gobebio-nginx
+    ports:
+      - "8080:80" # Expone la aplicación en el puerto 8080 del host
+    depends_on:
+      - backend
+    networks:
+      - gobebio-net
+
   # ---------------------------------------------------
   # Backend Laravel (Aplicación Principal)
   # ---------------------------------------------------
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile # Asumiendo que tienes un Dockerfile en ./backend
+      dockerfile: Dockerfile
+    image: gobebio-app # Le damos un nombre a la imagen construida
     container_name: gobebio-backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/var/www/html
     depends_on:
       - mysql
       - redis
     networks:
       - gobebio-net
+    environment:
+      - APP_NAME=${APP_NAME}
+      - APP_ENV=${APP_ENV}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_URL=${APP_URL}
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    # El entrypoint original de la imagen se encargará de la configuración.
+    # Solo especificamos el comando final que debe ejecutar.
+    command: unitd --no-daemon --control unix:/var/run/control.unit.sock
+
+  # ---------------------------------------------------
+  # Worker de Laravel (Procesa Colas)
+  # ---------------------------------------------------
+  worker:
+    # Reutilizamos la imagen construida para el backend en lugar de reconstruirla.
+    # No necesita una sección 'build'.
+    image: gobebio-app
+    container_name: gobebio-worker
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - backend # CRÍTICO: El worker debe esperar a que la imagen del backend esté construida.
+      - mysql
+      - redis
+    networks:
+      - gobebio-net
+    # CRÍTICO: El worker necesita las mismas variables de entorno que el backend
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -27,22 +73,6 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: /bin/sh -c "php artisan storage:link --force && /usr/local/bin/docker-entrypoint.sh unitd --no-daemon"
-
-  # ---------------------------------------------------
-  # Worker de Laravel (Procesa Colas)
-  # ---------------------------------------------------
-  worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: gobebio-worker
-    volumes:
-      - ./backend:/var/www/html
-    depends_on:
-      - backend # Depende del backend para el código fuente
-    networks:
-      - gobebio-net
     command: php artisan queue:work --sleep=3 --tries=3
 
   # ---------------------------------------------------
@@ -56,8 +86,9 @@ services:
     networks:
       - gobebio-net
     volumes:
-      - ./zkService:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload # El puerto 8001 queda expuesto solo a la red interna
+      - ./zkService:/app # Ideal para desarrollo, en producción el código va en la imagen
+    # Se quita --reload para producción
+    command: uvicorn main:app --host 0.0.0.0 --port 8001
     depends_on:
       - mysql
 

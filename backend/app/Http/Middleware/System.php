@@ -12,19 +12,22 @@ class System
 {
     public function handle(Request $request, Closure $next)
     {
-        // 1. Rutas críticas siempre abiertas
-        $open = [
+        // 1. Definimos las rutas que DEBEN ser excluidas de todas las comprobaciones.
+        // Estas son rutas esenciales para que el sistema pueda arrancar y autenticar.
+        $excludedRoutes = [
             'admin/login',
+            'login',
             'admin/logout',
             'admin/password/*',
             'admin/voyager-assets*',
-            '/',
         ];
-        if ($request->is($open)) {
-            return $next($request);
+        foreach ($excludedRoutes as $route) {
+            if ($request->is($route)) {
+                return $next($request); // Si la ruta es excluida, no se aplica ninguna lógica y se continúa.
+            }
         }
 
-        // 2. Modo mantenimiento
+        // 2. Modo mantenimiento (se aplica a todas las rutas NO excluidas)
         if (setting('configuracion.maintenance') === '1') {
             if (auth()->check() && auth()->user()->hasRole(['admin', 'Administrador'])) {
                 return $next($request);
@@ -32,14 +35,14 @@ class System
             return response()->view('errors.503', [], 503);
         }
 
-        // 3. Desarrollo: solo admins
+        // 3. Desarrollo: solo admins (se aplica a todas las rutas NO excluidas)
         if (Auth::user()) {
             if (setting('system.development') && !auth()->user()->hasRole('admin')) {
                return response()->view('errors.503', [], 503);
             }
         }
 
-        // 4. Lógica de licencia (solo si hay datos)
+        // 4. Lógica de licencia (se aplica a todas las rutas NO excluidas)
         $controller = new SolucionDigitalController();
         $data = $controller->settings_code();
 
@@ -47,11 +50,18 @@ class System
             $payment = new Controller();
             if ($payment->payment_alert() === 'finalizado') {
                 $blockedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
-                $allowedRoutes  = ['admin/login', 'admin/logout', 'admin/settings'];
-
+                $allowedRoutes  = [
+                    'admin/login',
+                    'login',
+                    'admin/logout',
+                    'admin/settings'
+                ];
                 if (
                     in_array($request->method(), $blockedMethods) &&
-                    !in_array($request->path(), $allowedRoutes)
+                    // Usamos $request->is() que es más flexible y maneja wildcards.
+                    !$request->is($allowedRoutes) &&
+                    // Añadimos una excepción para las rutas de Voyager que no queremos bloquear.
+                    !$request->is('admin/profile', 'admin/settings')
                 ) {
                     return redirect()->back()
                         ->withInput()

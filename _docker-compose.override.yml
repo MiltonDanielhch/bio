@@ -1,0 +1,23 @@
+version: '3.8'
+
+# Este archivo contiene configuraciones SOLO para desarrollo local.
+# Docker Compose lo fusionará automáticamente con el docker-compose.yml principal.
+
+services:
+  backend:
+    volumes:
+      # Monta el código fuente para que los cambios se reflejen en vivo.
+      - ./backend:/var/www/html
+
+  worker:
+    volumes:
+      # El worker también necesita acceso al código fuente actualizado.
+      - ./backend:/var/www/html
+
+  zkservice:
+    volumes:
+      # Monta el código fuente del microservicio.
+      - ./zkService:/app
+    command:
+      # Sobrescribe el comando de producción para añadir --reload en desarrollo.
+      uvicorn main:app --host 0.0.0.0 --port 8001 --reload

@@ -27,102 +27,101 @@ use TCG\Voyager\Facades\Voyager;
 
 // Redirección raíz y login
 Route::redirect('login', 'admin/login')->name('login');
-Route::redirect('/', 'admin');
+Route::redirect('/', '/admin/login');
 
-// Grupo principal con middleware personalizado
-Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
-
-    // Sobrescribimos la ruta del dashboard de Voyager para usar nuestro controlador personalizado.
-    // Debe estar ANTES de Voyager::routes() para tener prioridad.
-
-    // Rutas de Voyager (no tocar)
+// Unificamos todas las rutas bajo el prefijo 'admin' en un solo grupo para evitar colisiones.
+Route::group(['prefix' => 'admin'], function () {
+    // 1. Rutas de Voyager (login, logout, etc.). Estas son públicas.
     Voyager::routes();
-    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('voyager.dashboard');
 
-    // ───────────────── RUTAS DE RECURSOS REFACTORIZADAS ─────────────────
+    // 2. Creamos un sub-grupo para las rutas que SÍ necesitan protección.
+    Route::group(['middleware' => ['loggin', 'system']], function () {
+        // La ruta del dashboard y todas las demás rutas del panel van aquí dentro.
+        Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
+             ->name('voyager.dashboard'); // El nombre por defecto que busca Voyager.
 
-    // Empresas
-    Route::get('empresas/ajax/list', [EmpresaController::class, 'list'])->name('admin.empresas.ajax.list');
-    Route::resource('empresas', EmpresaController::class)->names('admin.empresas');
+        // ───────────────── RUTAS DE RECURSOS REFACTORIZADAS ─────────────────
 
-    // Sucursales
-    Route::get('sucursales/ajax/list', [SucursalController::class, 'list'])->name('admin.sucursales.ajax.list');
-    Route::resource('sucursales', SucursalController::class)->names('admin.sucursales');
+        // Empresas
+        Route::get('empresas/ajax/list', [EmpresaController::class, 'list'])->name('admin.empresas.ajax.list');
+        Route::resource('empresas', EmpresaController::class)->names('admin.empresas');
 
-    // Departamentos
-    Route::get('departamentos/ajax/list', [DepartamentoController::class, 'list'])->name('admin.departamentos.ajax.list');
-    Route::resource('departamentos', DepartamentoController::class)->names('admin.departamentos');
+        // Sucursales
+        Route::get('sucursales/ajax/list', [SucursalController::class, 'list'])->name('admin.sucursales.ajax.list');
+        Route::resource('sucursales', SucursalController::class)->names('admin.sucursales');
 
-    // Horarios
-    Route::get('horarios/ajax/list', [HorarioController::class, 'list'])->name('admin.horarios.ajax.list');
-    Route::resource('horarios', HorarioController::class)->names('admin.horarios');
+        // Departamentos
+        Route::get('departamentos/ajax/list', [DepartamentoController::class, 'list'])->name('admin.departamentos.ajax.list');
+        Route::resource('departamentos', DepartamentoController::class)->names('admin.departamentos');
 
-    // Asignación de Horarios
-    Route::get('asignacion-horarios/ajax/list', [AsignacionHorarioController::class, 'list'])->name('admin.asignacion-horarios.ajax.list');
-    Route::resource('asignacion-horarios', AsignacionHorarioController::class)->names('admin.asignacion-horarios');
+        // Horarios
+        Route::get('horarios/ajax/list', [HorarioController::class, 'list'])->name('admin.horarios.ajax.list');
+        Route::resource('horarios', HorarioController::class)->names('admin.horarios');
 
-    // Reportes de Asistencia
-    Route::get('reportes-asistencia/ajax/list', [ReporteAsistenciaController::class, 'list'])->name('admin.reportes-asistencia.ajax.list');
-    Route::get('reportes-asistencia/{reporte}/download', [ReporteAsistenciaController::class, 'download'])->name('admin.reportes-asistencia.download');
-    Route::resource('reportes-asistencia', ReporteAsistenciaController::class)->except(['edit', 'update'])->names('admin.reportes-asistencia');
+        // Asignación de Horarios
+        Route::get('asignacion-horarios/ajax/list', [AsignacionHorarioController::class, 'list'])->name('admin.asignacion-horarios.ajax.list');
+        Route::resource('asignacion-horarios', AsignacionHorarioController::class)->names('admin.asignacion-horarios');
 
-    // Registros de Asistencia
-    Route::get('registros-asistencia/ajax/list', [RegistroAsistenciaController::class, 'list'])->name('admin.registros-asistencia.ajax.list');
-    Route::resource('registros-asistencia', RegistroAsistenciaController::class)->except(['show'])->names('admin.registros-asistencia');
+        // Reportes de Asistencia
+        Route::get('reportes-asistencia/ajax/list', [ReporteAsistenciaController::class, 'list'])->name('admin.reportes-asistencia.ajax.list');
+        Route::get('reportes-asistencia/{reporte}/download', [ReporteAsistenciaController::class, 'download'])->name('admin.reportes-asistencia.download');
+        Route::resource('reportes-asistencia', ReporteAsistenciaController::class)->except(['edit', 'update'])->names('admin.reportes-asistencia');
 
-    // Empleados
-    Route::get('empleados/ajax/list', [EmpleadoController::class, 'list'])->name('admin.empleados.ajax.list');
-    Route::resource('empleados', EmpleadoController::class)->except(['show'])->names('admin.empleados');
+        // Registros de Asistencia
+        Route::get('registros-asistencia/ajax/list', [RegistroAsistenciaController::class, 'list'])->name('admin.registros-asistencia.ajax.list');
+        Route::resource('registros-asistencia', RegistroAsistenciaController::class)->except(['show'])->names('admin.registros-asistencia');
 
-    // Dispositivos
-    Route::get('dispositivos/ajax/list', [DispositivoController::class, 'list'])->name('admin.dispositivos.ajax.list');
-    Route::post('dispositivos/{dispositivo}/test-connection', [DispositivoController::class, 'testConnection'])->name('admin.dispositivos.test_connection');
-    Route::post('dispositivos/{dispositivo}/sync-now', [DispositivoController::class, 'syncNow'])->name('admin.dispositivos.sync_now');
-    Route::post('dispositivos/{dispositivo}/sync-users', [DispositivoController::class, 'syncUsers'])->name('admin.dispositivos.sync_users')->withTrashed();
-    Route::get('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'assignEmployees'])->name('admin.dispositivos.assign_employees');
-    Route::post('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'storeEmployees'])->name('admin.dispositivos.store_employees');
-    Route::resource('dispositivos', DispositivoController::class)->names('admin.dispositivos');
+        // Empleados
+        Route::get('empleados/ajax/list', [EmpleadoController::class, 'list'])->name('admin.empleados.ajax.list');
+        Route::resource('empleados', EmpleadoController::class)->except(['show'])->names('admin.empleados');
 
-    // Mapeo Dispositivo <-> Empleado
-    Route::get('dispositivo-empleado/ajax/list', [App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'list'])->name('admin.dispositivo-empleado.ajax.list');
-    Route::resource('dispositivo-empleado', App\Http\Controllers\Admin\DispositivoEmpleadoController::class)->except(['show'])->names('admin.dispositivo-empleado');
+        // Dispositivos
+        Route::get('dispositivos/ajax/list', [DispositivoController::class, 'list'])->name('admin.dispositivos.ajax.list');
+        Route::post('dispositivos/{dispositivo}/test-connection', [DispositivoController::class, 'testConnection'])->name('admin.dispositivos.test_connection');
+        Route::post('dispositivos/{dispositivo}/sync-now', [DispositivoController::class, 'syncNow'])->name('admin.dispositivos.sync_now');
+        Route::post('dispositivos/{dispositivo}/sync-users', [DispositivoController::class, 'syncUsers'])->name('admin.dispositivos.sync_users')->withTrashed();
+        Route::get('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'assignEmployees'])->name('admin.dispositivos.assign_employees');
+        Route::post('dispositivos/{dispositivo}/assign-employees', [DispositivoController::class, 'storeEmployees'])->name('admin.dispositivos.store_employees');
+        Route::resource('dispositivos', DispositivoController::class)->names('admin.dispositivos');
 
-    // Tipos de Incidencia
-    Route::get('tipos-incidencia/ajax/list', [TipoIncidenciaController::class, 'list'])->name('admin.tipos-incidencia.ajax.list');
-    Route::resource('tipos-incidencia', TipoIncidenciaController::class)->except(['show'])->names('admin.tipos-incidencia');
+        // Mapeo Dispositivo <-> Empleado
+        Route::get('dispositivo-empleado/ajax/list', [App\Http\Controllers\Admin\DispositivoEmpleadoController::class, 'list'])->name('admin.dispositivo-empleado.ajax.list');
+        Route::resource('dispositivo-empleado', App\Http\Controllers\Admin\DispositivoEmpleadoController::class)->except(['show'])->names('admin.dispositivo-empleado');
 
-    // Incidencias
-    Route::get('incidencias/ajax/list', [\App\Http\Controllers\IncidenciaController::class, 'list'])->name('admin.incidencias.ajax.list');
-    Route::resource('incidencias', \App\Http\Controllers\IncidenciaController::class)->except(['show'])->names('admin.incidencias');
+        // Tipos de Incidencia
+        Route::get('tipos-incidencia/ajax/list', [TipoIncidenciaController::class, 'list'])->name('admin.tipos-incidencia.ajax.list');
+        Route::resource('tipos-incidencia', TipoIncidenciaController::class)->except(['show'])->names('admin.tipos-incidencia');
 
-    // ───────────────── RUTAS LEGACY (REFACTORIZADAS) ─────────────────
+        // Incidencias
+        Route::get('incidencias/ajax/list', [\App\Http\Controllers\IncidenciaController::class, 'list'])->name('admin.incidencias.ajax.list');
+        Route::resource('incidencias', \App\Http\Controllers\IncidenciaController::class)->except(['show'])->names('admin.incidencias');
 
-    // Personas (Usuarios de Voyager)
-    Route::get('people/ajax/list', [PersonController::class, 'list'])->name('admin.people.ajax.list');
-    Route::resource('people', PersonController::class)->except(['show'])->names('admin.people');
+        // ───────────────── RUTAS LEGACY (REFACTORIZADAS) ─────────────────
 
-    // Usuarios (del sistema, si es diferente a Personas)
-    Route::get('users/ajax/list', [UserController::class, 'list'])->name('admin.users.ajax.list');
-    Route::resource('users', UserController::class)->except(['show'])->names('admin.users');
+        // Personas (Usuarios de Voyager)
+        Route::get('people/ajax/list', [PersonController::class, 'list'])->name('admin.people.ajax.list');
+        Route::resource('people', PersonController::class)->except(['show'])->names('admin.people');
 
-    // ──────────────── ROLES ────────────────
-    // Nota: Voyager maneja las rutas de roles. Si necesitas una lista AJAX, esta ruta está bien.
-    // Si se refactoriza a un CRUD completo, se usaría Route::resource.
-    Route::get('roles/ajax/list', [RoleController::class, 'list'])->name('admin.roles.ajax.list');
+        // Usuarios (del sistema, si es diferente a Personas)
+        Route::get('users/ajax/list', [UserController::class, 'list'])->name('admin.users.ajax.list');
+        Route::resource('users', UserController::class)->except(['show'])->names('admin.users');
 
+        // ──────────────── ROLES ────────────────
+        Route::get('roles/ajax/list', [RoleController::class, 'list'])->name('admin.roles.ajax.list');
 
-    // ──────────────── AJAX GENÉRICO ────────────────
-    Route::prefix('ajax')->group(function () {
-        Route::get('/personList', [AjaxController::class, 'personList']);
-        Route::post('/person/store', [AjaxController::class, 'personStore']);
+        // ──────────────── AJAX GENÉRICO ────────────────
+        Route::prefix('ajax')->group(function () {
+            Route::get('/personList', [AjaxController::class, 'personList']);
+            Route::post('/person/store', [AjaxController::class, 'personStore']);
+        });
+
+        // ──────────────── UTILIDADES ────────────────
+        Route::get('/clear-cache', function () {
+            Artisan::call('optimize:clear');
+            return redirect('/admin/profile')->with([
+                'message' => 'Cache eliminada.',
+                'alert-type' => 'success'
+            ]);
+        })->name('clear.cache');
     });
-
-    // ──────────────── UTILIDADES ────────────────
-    Route::get('/clear-cache', function () {
-        Artisan::call('optimize:clear');
-        return redirect('/admin/profile')->with([
-            'message' => 'Cache eliminada.',
-            'alert-type' => 'success'
-        ]);
-    })->name('clear.cache');
 });
