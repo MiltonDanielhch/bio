@@ -14,6 +14,16 @@ x-common-env-variables: &common-env-variables
   DB_PASSWORD: '${DB_PASSWORD}'
   REDIS_HOST: redis
   REDIS_PORT: 6379
+  # En producción, los contenedores se comunican a través de la red del host
+  # porque zkservice usa network_mode: "host". Coolify expone el host
+  # a través de una IP interna, pero para este caso, asumimos que el host es accesible.
+  ZK_SERVICE_URL: 'http://localhost:8001'
+  ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
+
+x-common-volumes: &common-volumes
+  # En producción, el código está en la imagen. Solo el storage es persistente.
+  - ./backend/storage:/var/www/html/storage
+  - /var/www/html/vendor
 
 services:
   # ---------------------------------------------------
@@ -39,40 +49,36 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: gobebio-app # Le damos un nombre a la imagen construida
+    image: gobebio-app # Define el nombre de la imagen a construir y usar
     container_name: gobebio-backend
     depends_on:
-      mysql: # Espera a que la base de datos esté saludable antes de iniciar.
+      mysql:
+        condition: service_healthy
+      zkservice: # Asegura que el backend espere a que el microservicio esté listo.
         condition: service_healthy
       redis:
         condition: service_started
     networks:
       - gobebio-net
-    # Añade este volumen para que los cambios en el código local se reflejen en el contenedor.
-    volumes:
-      - ./backend:/var/www/html
+    volumes: *common-volumes
     environment: *common-env-variables # Reutiliza las variables comunes.
-    # El entrypoint original de la imagen se encargará de la configuración.
-    # Solo especificamos el comando final que debe ejecutar.
-    command: unitd --no-daemon --control unix:/var/run/control.unit.sock
 
   # ---------------------------------------------------
   # Worker de Laravel (Procesa Colas)
   # ---------------------------------------------------
   worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    # Reutilizamos la imagen construida para el backend en lugar de reconstruirla.
-    # No necesita una sección 'build'.
+    # Al definir la misma sección 'build' y 'image' que el backend,
+    # Docker Compose construye la imagen una sola vez y la reutiliza.
+    build: ./backend
     image: gobebio-app
     container_name: gobebio-worker
-    volumes:
-      - ./backend:/var/www/html
+    volumes: *common-volumes
     depends_on: # El worker depende de que la BD y Redis estén listos.
       backend: # Añade esta dependencia para asegurar que la imagen se construya primero.
         condition: service_started
       mysql:
+        condition: service_healthy
+      zkservice: # Asegura que el worker espere a que el microservicio esté listo.
         condition: service_healthy
       redis:
         condition: service_started
@@ -84,22 +90,27 @@ services:
   # ---------------------------------------------------
   # Microservicio Biométrico (FastAPI)
   # ---------------------------------------------------
+  # En producción sobre Linux, el servicio se ejecuta en un contenedor
+  # pero comparte la red del host para acceder a la LAN.
+  # ---------------------------------------------------
   zkservice:
     build:
       context: ./zkService
       dockerfile: Dockerfile
-    ports:
-      - "8001:8001" # Expone el puerto del microservicio
     container_name: gobebio-zkservice
-    networks:
-      - gobebio-net
-    volumes:
-      - ./zkService:/app # Ideal para desarrollo, en producción el código va en la imagen
-    # Se quita --reload para producción
+    # network_mode: "host" en Linux da acceso a la red del servidor.
+    # Esto es crucial para que el microservicio pueda ver los dispositivos en la LAN.
+    network_mode: "host" 
+    # El comando de producción no usa --reload.
     command: uvicorn main:app --host 0.0.0.0 --port 8001
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   # ---------------------------------------------------
   # Base de Datos MySQL

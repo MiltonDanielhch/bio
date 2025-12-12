@@ -1,32 +1,32 @@
-# Etapa 1: Construcción de dependencias
-# Usamos una imagen base de Python ligera y la nombramos 'builder'
-FROM python:3.11-slim
+# --- Etapa de Construcción (Builder) ---
+# Usa una imagen completa de Python para instalar dependencias.
+FROM python:3.11-slim as builder
 
-# 1. Establecer el directorio de trabajo
+# 1. Variables de entorno
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# 3. Establecer directorio de trabajo y copiar archivo de requerimientos
 WORKDIR /app
-
-# 2. Copiar el archivo de requerimientos primero para aprovechar el cache de Docker
 COPY requirements.txt .
 
-# 3. Instalar las dependencias del proyecto
-RUN pip install --no-cache-dir -r requirements.txt
+# 4. Instalar dependencias de Python
+RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
-# 4. Copiar el resto del código de la aplicación
+# --- Etapa Final (Production) ---
+# Usa una imagen mínima para la ejecución.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 1. Instalar curl para el healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# 2. Copiar las dependencias pre-compiladas y el código de la aplicación
+COPY --from=builder /app/wheels /wheels
 COPY . .
 
-# 5. Crear un usuario y grupo no-root para mejorar la seguridad
-# Esto evita que la aplicación se ejecute con privilegios de administrador.
-RUN addgroup --system --gid 1001 nonroot && \
-    adduser --system --uid 1001 --ingroup nonroot nonroot
+RUN pip install --no-cache-dir /wheels/*
 
-# 6. Cambiar la propiedad de los archivos al nuevo usuario
-RUN chown -R nonroot:nonroot /app
-
-# 7. Cambiar al usuario no-root
-USER nonroot
-
-# 8. Exponer el puerto en el que correrá la aplicación
+# El comando para iniciar la aplicación se define en docker-compose.yml
 EXPOSE 8001
-
-# 9. Comando para ejecutar la aplicación en modo producción (sin --reload)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
