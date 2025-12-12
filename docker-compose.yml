@@ -1,3 +1,5 @@
+version: "3.8"
+
 x-common-env-variables: &common-env-variables
   # Define un bloque de variables de entorno comunes para reutilizar.
   # Esto evita la duplicación y facilita el mantenimiento.
@@ -34,11 +36,16 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: gobebio-nginx
+    restart: unless-stopped
     ports:
       - "8080:80" # Expone la aplicación en el puerto 8080 del host
     depends_on: # Nginx depende de que el backend esté listo para recibir tráfico.
       backend:
         condition: service_started
+    # Permite que nginx resuelva 'host.docker.internal' a la IP del host,
+    # para poder comunicarse con servicios en network_mode: "host" como zkservice.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - gobebio-net
 
@@ -51,6 +58,7 @@ services:
       dockerfile: Dockerfile
     image: gobebio-app # Define el nombre de la imagen a construir y usar
     container_name: gobebio-backend
+    restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
@@ -72,6 +80,7 @@ services:
     build: ./backend
     image: gobebio-app
     container_name: gobebio-worker
+    restart: unless-stopped
     volumes: *common-volumes
     depends_on: # El worker depende de que la BD y Redis estén listos.
       backend: # Añade esta dependencia para asegurar que la imagen se construya primero.
@@ -98,6 +107,7 @@ services:
       context: ./zkService
       dockerfile: Dockerfile
     container_name: gobebio-zkservice
+    restart: unless-stopped
     # network_mode: "host" en Linux da acceso a la red del servidor.
     # Esto es crucial para que el microservicio pueda ver los dispositivos en la LAN.
     network_mode: "host" 
@@ -118,6 +128,7 @@ services:
   mysql:
     image: 'mysql/mysql-server:8.0'
     container_name: gobebio-mysql
+    restart: unless-stopped
     ports:
       - "3307:3306"
     environment:
@@ -142,6 +153,7 @@ services:
   redis:
     image: 'redis:alpine'
     container_name: gobebio-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
