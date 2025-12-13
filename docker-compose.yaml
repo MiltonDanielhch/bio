@@ -22,10 +22,6 @@ x-common-env-variables: &common-env-variables
   ZK_SERVICE_URL: 'http://localhost:8001'
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
-x-common-volumes: &common-volumes
-  # En producción, el código está en la imagen. Solo el storage es persistente.
-  - ./backend/storage:/var/www/html/storage
-
 services:
   # ---------------------------------------------------
   # Servidor Web Nginx (Punto de Entrada)
@@ -80,7 +76,9 @@ services:
     image: gobebio-app
     container_name: gobebio-worker
     restart: unless-stopped
-    volumes: *common-volumes
+    volumes:
+      # En producción, el código está en la imagen. Solo el storage es persistente.
+      - ./backend/storage:/var/www/html/storage
     depends_on: # El worker depende de que la BD y Redis estén listos.
       backend: # Añade esta dependencia para asegurar que la imagen se construya primero.
         condition: service_started
@@ -92,7 +90,7 @@ services:
         condition: service_started
     networks:
       - gobebio-net
-    environment: *common-env-variables # Reutiliza las variables comunes.
+    environment: *common-env-variables
     command: php artisan queue:work --sleep=3 --tries=3
 
   # ---------------------------------------------------
