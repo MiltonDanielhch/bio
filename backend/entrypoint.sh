@@ -6,10 +6,13 @@ set -e
 echo "Waiting 15 seconds for database to be ready..."
 sleep 15
 
-# 2. Ejecutar el comando de instalación personalizado de la aplicación.
-#    Esto debería encargarse de las migraciones y cualquier otra configuración inicial.
-echo "Running application installation (example:install)..."
-yes | php artisan example:install
+# 2. Ejecutar los comandos de Laravel para producción.
+echo "Running Laravel production setup..."
+php artisan migrate --force
+php artisan storage:link
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 # 3. Ejecutar el script de entrada original de la imagen.
 #    Este script se encargará de iniciar Unit correctamente en segundo plano

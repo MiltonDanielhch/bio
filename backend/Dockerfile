@@ -34,6 +34,7 @@ COPY . .
 
 # 8. Optimizar autoloader y scripts de Laravel
 RUN composer dump-autoload --optimize --no-dev
+RUN touch .env
 
 # 9. Establecer permisos para el directorio de la aplicación
 RUN mkdir -p storage/logs \
