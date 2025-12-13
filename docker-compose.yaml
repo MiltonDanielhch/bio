@@ -1,8 +1,6 @@
 version: "3.8"
 
 x-common-env-variables: &common-env-variables
-  # Define un bloque de variables de entorno comunes para reutilizar.
-  # Esto evita la duplicación y facilita el mantenimiento.
   APP_NAME: '${APP_NAME}'
   APP_ENV: '${APP_ENV}'
   APP_KEY: '${APP_KEY}'
@@ -16,9 +14,6 @@ x-common-env-variables: &common-env-variables
   DB_PASSWORD: '${DB_PASSWORD}'
   REDIS_HOST: redis
   REDIS_PORT: 6379
-  # En producción, los contenedores se comunican a través de la red del host
-  # porque zkservice usa network_mode: "host". Coolify expone el host
-  # a través de una IP interna, pero para este caso, asumimos que el host es accesible.
   ZK_SERVICE_URL: 'http://localhost:8001'
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
@@ -32,13 +27,11 @@ services:
       dockerfile: Dockerfile
     container_name: gobebio-nginx
     restart: unless-stopped
-    ports:
-      - "8080:80" # Expone la aplicación en el puerto 8080 del host
-    depends_on: # Nginx depende de que el backend esté listo para recibir tráfico.
+    ports: # Coolify gestionará los puertos, pero lo dejamos para pruebas locales.
+      - "8080:80"
+    depends_on:
       backend:
         condition: service_started
-    # Permite que nginx resuelva 'host.docker.internal' a la IP del host,
-    # para poder comunicarse con servicios en network_mode: "host" como zkservice.
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -51,20 +44,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: gobebio-app # Define el nombre de la imagen a construir y usar
+    image: gobebio-app
     container_name: gobebio-backend
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
-      zkservice: # Asegura que el backend espere a que el microservicio esté listo.
+      zkservice:
         condition: service_healthy
       redis:
         condition: service_started
     networks:
       - gobebio-net
     volumes:
-      # En producción, el código está en la imagen. Solo el storage es persistente.
       - ./backend/storage:/var/www/html/storage
     environment: *common-env-variables
 
@@ -72,21 +64,20 @@ services:
   # Worker de Laravel (Procesa Colas)
   # ---------------------------------------------------
   worker:
-    # Al definir la misma sección 'build' y 'image' que el backend,
-    # Docker Compose construye la imagen una sola vez y la reutiliza.
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: gobebio-app
     container_name: gobebio-worker
     restart: unless-stopped
     volumes:
-      # En producción, el código está en la imagen. Solo el storage es persistente.
       - ./backend/storage:/var/www/html/storage
-    depends_on: # El worker depende de que la BD y Redis estén listos.
-      backend: # Añade esta dependencia para asegurar que la imagen se construya primero.
+    depends_on:
+      backend:
         condition: service_started
       mysql:
         condition: service_healthy
-      zkservice: # Asegura que el worker espere a que el microservicio esté listo.
+      zkservice:
         condition: service_healthy
       redis:
         condition: service_started
@@ -98,19 +89,13 @@ services:
   # ---------------------------------------------------
   # Microservicio Biométrico (FastAPI)
   # ---------------------------------------------------
-  # En producción sobre Linux, el servicio se ejecuta en un contenedor
-  # pero comparte la red del host para acceder a la LAN.
-  # ---------------------------------------------------
   zkservice:
     build:
       context: ./zkService
       dockerfile: Dockerfile
     container_name: gobebio-zkservice
     restart: unless-stopped
-    # network_mode: "host" en Linux da acceso a la red del servidor.
-    # Esto es crucial para que el microservicio pueda ver los dispositivos en la LAN.
-    network_mode: "host" 
-    # El comando de producción no usa --reload.
+    network_mode: "host"
     command: uvicorn main:app --host 0.0.0.0 --port 8001
     depends_on:
       mysql:
@@ -128,7 +113,7 @@ services:
     image: 'mysql/mysql-server:8.0'
     container_name: gobebio-mysql
     restart: unless-stopped
-    ports:
+    ports: # Exponemos el puerto para poder conectarnos desde el exterior si es necesario.
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
@@ -140,7 +125,6 @@ services:
     networks:
       - gobebio-net
     healthcheck:
-      # Comprueba si el servidor MySQL está listo para aceptar comandos.
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
@@ -153,19 +137,21 @@ services:
     image: 'redis:alpine'
     container_name: gobebio-redis
     restart: unless-stopped
-    ports:
+    ports: # Exponemos el puerto para pruebas.
       - "6379:6379"
     volumes:
       - gobebio-redis-data:/data
     networks:
       - gobebio-net
     healthcheck:
-      # Comprueba si el servidor Redis está respondiendo.
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+# ---------------------------------------------------
+# Red y Volúmenes
+# ---------------------------------------------------
 networks:
   gobebio-net:
     driver: bridge
