@@ -17,7 +17,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. Copiar archivo de configuración de PHP personalizado
-#    Asegúrate de que este archivo exista en tu contexto de build.
 COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # 4. Instalar Composer
@@ -38,17 +37,18 @@ RUN composer dump-autoload --optimize --no-dev
 RUN php artisan storage:link
 
 # 9. Establecer permisos finales para la aplicación
+# Estos permisos permiten al usuario 'unit' escribir en 'storage' y 'cache'.
+# Y ahora, también permitirán al usuario 'unit' crear el control.unit.sock
+# en /var/www/html (si unit.json ha sido modificado correctamente).
 RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Crear directorios de Unit y dar permisos.
-# Esto es esencial ahora que 'unit.json' apunta a /var/lib/unit/control.sock
-RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
-    && chown -R unit:unit /var/lib/unit
+# [IMPORTANTE] Eliminamos la sección obsoleta que preparaba directorios de Unit
+# que ya no usamos para el control socket:
+# RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
+#     && chown -R unit:unit /var/lib/unit
 
 # 10. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json
 
-# 11. Eliminar pasos de entrypoint/script personalizado.
-# Se usa el ENTRYPOINT por defecto de la imagen base (Unit)
+# 11. Cambiar al usuario sin privilegios para ejecutar la aplicación
 USER unit
-

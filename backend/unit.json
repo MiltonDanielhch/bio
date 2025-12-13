@@ -1,10 +1,11 @@
 {
+    "control": {
+        "socket": "/var/www/html/control.unit.sock"
+    },
+
     "listeners": {
         "*:80": {
             "application": "laravel"
-        },
-        "unix:/var/lib/unit/control.sock": {
-             "pass": "applications"
         }
     },
 
