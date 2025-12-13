@@ -1,21 +1,22 @@
 {
     "listeners": {
         "*:80": {
-            "pass": "applications/laravel"
+            "application": "laravel"
+        },
+        "unix:/var/lib/unit/control.sock": {
+             "pass": "applications"
         }
     },
 
     "applications": {
         "laravel": {
             "type": "php",
-            "root": "/var/www/html/public",
-            "script": "index.php"
+            "targets": {
+                ".php": "/var/www/html/public/"
+            },
+            "user": "unit",
+            "group": "unit",
+            "root": "/var/www/html"
         }
-    },
-
-    "settings": {
-        "user": "unit",
-        "group": "unit",
-        "control_socket": "/var/lib/unit/control.sock"
     }
 }
