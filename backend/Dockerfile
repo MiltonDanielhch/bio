@@ -36,7 +36,10 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # 9. Establecer permisos para el directorio de la aplicación
-RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p storage/logs \
+    && touch storage/logs/laravel.log \
+    && chown -R unit:unit /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 10. [RESTABLECIDO Y CRÍTICO] Creamos los directorios de UNIT en /var/lib/unit
 #     y el directorio de RUN para el socket de control.

@@ -9,7 +9,7 @@ sleep 15
 # 2. Ejecutar el comando de instalación personalizado de la aplicación.
 #    Esto debería encargarse de las migraciones y cualquier otra configuración inicial.
 echo "Running application installation (example:install)..."
-php artisan example:install --force
+yes | php artisan example:install
 
 # 3. Ejecutar el script de entrada original de la imagen.
 #    Este script se encargará de iniciar Unit correctamente en segundo plano
