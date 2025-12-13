@@ -9,10 +9,13 @@
         "laravel": {
             "type": "php",
             "root": "/var/www/html/public",
-            "script": "index.php",
-            "environment": {
-                "APP_ENV": "local"
-            }
+            "script": "index.php"
         }
+    },
+
+    "settings": {
+        "user": "unit",
+        "group": "unit",
+        "control_socket": "/var/lib/unit/control.sock"
     }
 }
