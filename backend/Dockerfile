@@ -42,3 +42,5 @@ RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/
 
 # 10. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json
+
+USER unit
