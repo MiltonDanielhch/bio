@@ -63,8 +63,10 @@ services:
         condition: service_started
     networks:
       - gobebio-net
-    volumes: *common-volumes
-    environment: *common-env-variables # Reutiliza las variables comunes.
+    volumes:
+      # En producción, el código está en la imagen. Solo el storage es persistente.
+      - ./backend/storage:/var/www/html/storage
+    environment: *common-env-variables
 
   # ---------------------------------------------------
   # Worker de Laravel (Procesa Colas)
