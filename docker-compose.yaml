@@ -25,7 +25,6 @@ x-common-env-variables: &common-env-variables
 x-common-volumes: &common-volumes
   # En producción, el código está en la imagen. Solo el storage es persistente.
   - ./backend/storage:/var/www/html/storage
-  - /var/www/html/vendor
 
 services:
   # ---------------------------------------------------
