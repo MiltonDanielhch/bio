@@ -1,20 +1,18 @@
 #!/bin/sh
 set -e
 
-# 1. Iniciar el demonio de Unit en segundo plano con el socket de control correcto.
-echo "Starting Unit daemon..."
-/usr/sbin/unitd --no-daemon --control unix:/var/run/unit/control.sock
+# 1. Esperar a que la base de datos esté completamente lista.
+#    Esto evita errores de conexión durante el inicio.
+echo "Waiting 15 seconds for database to be ready..."
+sleep 15
 
-# 2. Esperar a que el socket de control esté listo.
-while [ ! -S /var/run/unit/control.sock ]; do
-    echo "Waiting for control socket..."
-    sleep 1
-done
+# 2. Ejecutar el comando de instalación personalizado de la aplicación.
+#    Esto debería encargarse de las migraciones y cualquier otra configuración inicial.
+echo "Running application installation (example:install)..."
+php artisan example:install
 
-# 3. Ejecutar las migraciones para verificar la conexión a la BD.
-echo "Running Laravel migrations..."
-php artisan migrate --force
-
-# 4. Ejecutar el script de entrada original para cargar la configuración de la aplicación.
+# 3. Ejecutar el script de entrada original de la imagen.
+#    Este script se encargará de iniciar Unit correctamente en segundo plano
+#    y cargar la configuración de la aplicación desde /docker-entrypoint.d/unit.json.
 echo "Loading application configuration..."
-/usr/local/bin/docker-entrypoint.sh unitd
+exec /usr/local/bin/docker-entrypoint.sh unitd --control unix:/var/run/unit/control.sock
