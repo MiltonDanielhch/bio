@@ -34,7 +34,6 @@ COPY . .
 
 # 8. Optimizar autoloader y scripts de Laravel
 RUN composer dump-autoload --optimize --no-dev
-RUN php artisan storage:link
 
 # 9. Establecer permisos para el directorio de la aplicación
 RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
