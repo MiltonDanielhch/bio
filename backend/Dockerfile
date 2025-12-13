@@ -40,6 +40,10 @@ RUN php artisan storage:link
 # 9. Establecer permisos finales para la aplicación
 RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
+    && chown -R unit:unit /var/lib/unit \
+    && chown -R unit:unit /var/run
+
 # 10. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json
 
