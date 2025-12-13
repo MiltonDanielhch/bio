@@ -45,6 +45,5 @@ RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
     && chown -R unit:unit /var/run
 
 # 10. Copiar la configuración de NGINX Unit
-COPY unit.json /docker-entrypoint.d/unit.json
-
+COPY backend/unit.json /docker-entrypoint.d/unit.json
 USER unit
