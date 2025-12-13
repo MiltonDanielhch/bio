@@ -40,9 +40,9 @@ RUN php artisan storage:link
 RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 10. [RESTABLECIDO Y CRÍTICO] Creamos los directorios de UNIT en /var/lib/unit
-#     para que el proceso de inicialización no falle por permisos.
-RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
-    && chown -R unit:unit /var/lib/unit
+#     y el directorio de RUN para el socket de control.
+RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts /var/run/unit \
+    && chown -R unit:unit /var/lib/unit /var/run/unit
 
 # 11. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json

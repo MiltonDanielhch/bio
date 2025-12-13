@@ -1,6 +1,6 @@
 {
     "control": {
-        "socket": "/var/www/html/control.unit.sock"
+        "socket": "unix:/var/run/unit/control.sock"
     },
 
     "listeners": {
