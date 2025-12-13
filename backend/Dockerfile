@@ -47,5 +47,10 @@ RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts /var/run/unit \
 # 11. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json
 
+# 11.5. Copiar y establecer el nuevo punto de entrada
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 # 12. Cambiar al usuario sin privilegios para ejecutar la aplicación
 USER unit
