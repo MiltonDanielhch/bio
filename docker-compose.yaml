@@ -19,7 +19,7 @@ x-common-env-variables: &common-env-variables
   REDIS_HOST: redis
   REDIS_PORT: 6379
   
-  ZK_SERVICE_URL: 'http://host.docker.internal:8001' 
+  ZK_SERVICE_URL: 'http://zkservice:8001' 
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
 services:
@@ -69,9 +69,9 @@ services:
   # Worker de Laravel (Procesa Colas)
   # ---------------------------------------------------
   worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    # build:
+    #   context: ./backend
+    #   dockerfile: Dockerfile
     image: gobebio-app
     container_name: gobebio-worker
     restart: unless-stopped
