@@ -40,11 +40,18 @@ RUN php artisan storage:link
 # 9. Establecer permisos finales para la aplicación
 RUN chown -R unit:unit /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Crear directorios de Unit (solo los de lib)
 RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts \
-    && chown -R unit:unit /var/lib/unit \
-    && chown -R unit:unit /var/run
+    && chown -R unit:unit /var/lib/unit
 
 # 10. Copiar la configuración de NGINX Unit
 COPY unit.json /docker-entrypoint.d/unit.json
 
+# 11. Copiar el nuevo script de entrada y darle permisos de ejecución (se ejecuta como root)
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER unit
+
+# Establecer el nuevo entrypoint para que ejecute nuestro script antes de Unit
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
