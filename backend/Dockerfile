@@ -1,13 +1,4 @@
-# --- Stage 1: Build Frontend Assets ---
-FROM node:18-alpine as node-builder
-WORKDIR /app
-COPY package.json package-lock.json* vite.config.js ./
-# Copy resources directory (css, js, views)
-COPY resources ./resources
-# Check if package-lock exists to decide install method, but standard 'npm install' is safe enough here.
-RUN npm install && npm run build
-
-# --- Stage 2: Build Application ---
+# --- Application Build Stage ---
 FROM unit:1.33.0-php8.2
 
 # 1. Environment Variables
@@ -38,9 +29,8 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --prefer-dist --no-scripts --no-dev --no-autoloader
 
-# 7. Copy Application Code & Built Assets
+# 7. Copy Application Code
 COPY . .
-COPY --from=node-builder /app/public/build ./public/build
 
 # 8. Optimize Autoloader
 RUN composer dump-autoload --optimize --no-dev
