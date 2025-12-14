@@ -1,8 +1,7 @@
 #!/bin/sh
 set -e
 
-# 1. Bucle de espera robusto para la base de datos.
-#    Intenta conectarse a la base de datos cada 2 segundos hasta que tenga éxito.
+# 1. Wait for Database
 echo "Waiting for database to be ready..."
 until php -r "try { new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (PDOException \$e) { exit(1); }"; do
     echo "Database is unavailable - sleeping"
@@ -10,29 +9,39 @@ until php -r "try { new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_D
 done
 echo "Database is ready!"
 
-# 2. Ejecutar los comandos de Laravel para producción.
-#    Estos comandos son idempotentes y seguros para ejecutarse en cada inicio.
-echo "Running Laravel production setup..."
+# 2. Production Setup (Only run this broadly, specific commands will follow)
+# We run this on every container start for simplicity in this setup, 
+# ensuring env is always fresh. In high-scale, move migration to a release phase.
+echo "Running setup..."
 
-# Limpia cachés antiguas para evitar conflictos antes de crear las nuevas.
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-
-# Ejecuta migraciones y crea el enlace de almacenamiento de forma segura.
-php artisan migrate --force # --force es necesario para entornos no interactivos.
-
-# Crea el enlace simbólico solo si no existe para evitar errores.
 if [ ! -L "public/storage" ]; then
     php artisan storage:link
 fi
 
-# Crea las cachés optimizadas para producción.
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+# Optimize only if we are in production
+if [ "$APP_ENV" = "production" ]; then
+    php artisan config:cache
+    php artisan route:cache
+    php artisan view:cache
+fi
 
-# 3. Ceder el control al script de entrada original de la imagen base.
-#    Este se encargará de iniciar Unit correctamente con la configuración de /docker-entrypoint.d/
-echo "Starting Unit daemon..."
-exec /usr/local/bin/docker-entrypoint.sh unitd --no-daemon --control unix:/var/run/unit/control.sock
+# 3. Decision Logic
+# If arguments are passed to the container (e.g. via 'command' in docker-compose), execute them.
+# Otherwise, start the Nginx Unit web server.
+if [ "$#" -gt 0 ]; then
+    # If the first argument is a hyphen, assume it's a flag for unitd (unlikely here but standard practice)
+    if [ "${1#-}" != "$1" ]; then
+        set -- unitd "$@"
+    fi
+    
+    echo "Executing command: $@"
+    exec "$@"
+else
+    # Default behavior: Start Web Server
+    # Run migrations ONLY here to avoid race conditions with workers
+    echo "Running migrations..."
+    php artisan migrate --force
+    
+    echo "Starting Unit daemon..."
+    exec /usr/local/bin/docker-entrypoint.sh unitd --no-daemon --control unix:/var/run/unit/control.sock
+fi

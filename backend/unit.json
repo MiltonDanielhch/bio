@@ -1,16 +1,40 @@
 {
     "listeners": {
         "*:80": {
-            "pass": "applications/laravel"
+            "pass": "routes"
         }
     },
+    "routes": [
+        {
+            "match": {
+                "uri": [
+                    "/build/*",
+                    "/assets/*",
+                    "/storage/*",
+                    "/favicon.ico",
+                    "/robots.txt"
+                ]
+            },
+            "action": {
+                "share": "/var/www/html/public/"
+            }
+        },
+        {
+            "action": {
+                "pass": "applications/laravel"
+            }
+        }
+    ],
     "applications": {
         "laravel": {
             "type": "php",
             "user": "unit",
             "group": "unit",
             "root": "/var/www/html/public",
-            "script": "index.php"
+            "script": "index.php",
+            "options": {
+                "admin": {}
+            }
         }
     }
 }

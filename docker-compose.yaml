@@ -14,78 +14,58 @@ x-common-env-variables: &common-env-variables
   DB_USERNAME: '${DB_USERNAME}'
   DB_PASSWORD: '${DB_PASSWORD}'
 
-  CACHE_DRIVER: file
+  CACHE_DRIVER: redis
   QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis
+
   REDIS_HOST: redis
   REDIS_PORT: 6379
-  
-  ZK_SERVICE_URL: 'http://zkservice:8001' 
+
+  ZK_SERVICE_URL: 'http://zkservice:8001'
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
 services:
   # ---------------------------------------------------
-  # Servidor Web Nginx (Punto de Entrada)
-  # ---------------------------------------------------
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: gobebio-nginx
-    restart: unless-stopped
-    ports: # Coolify gestionará los puertos, pero lo dejamos para pruebas locales.
-      - "8080:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - gobebio-net
-
-  # ---------------------------------------------------
-  # Backend Laravel (Aplicación Principal)
+  # Backend Laravel (App Server + Static Files)
   # ---------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: gobebio-app
+    image: gobebio-backend
     container_name: gobebio-backend
     restart: unless-stopped
+    ports:
+      - "8000:80" # Coolify will handle ingress routing to this port.
     depends_on:
       mysql:
-        condition: service_healthy
-      zkservice:
         condition: service_healthy
       redis:
         condition: service_started
     networks:
       - gobebio-net
-    volumes: # Usamos un volumen nombrado para evitar conflictos de permisos con el host.
+    volumes:
       - gobebio-storage:/var/www/html/storage
     environment: *common-env-variables
-    healthcheck: # Verifica que el proceso de Unit esté corriendo antes de considerarlo saludable.
-      test: ["CMD", "pgrep", "unitd"]
-      interval: 10s
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
 
   # ---------------------------------------------------
-  # Worker de Laravel (Procesa Colas)
+  # Laravel Worker (Queue Processing)
   # ---------------------------------------------------
   worker:
-    # build:
-    #   context: ./backend
-    #   dockerfile: Dockerfile
-    image: gobebio-app
+    image: gobebio-backend
     container_name: gobebio-worker
     restart: unless-stopped
-    volumes: # El worker también necesita acceso al storage.
+    volumes:
       - gobebio-storage:/var/www/html/storage
-    depends_on: # Dependencias directas para mayor claridad.
+    depends_on:
+      backend:
+        condition: service_started
       mysql:
-        condition: service_healthy
-      zkservice:
         condition: service_healthy
       redis:
         condition: service_started
@@ -95,36 +75,56 @@ services:
     command: php artisan queue:work --sleep=3 --tries=3
 
   # ---------------------------------------------------
-  # Microservicio Biométrico (FastAPI)
+  # Laravel Scheduler (Cron Jobs)
+  # ---------------------------------------------------
+  scheduler:
+    image: gobebio-backend
+    container_name: gobebio-scheduler
+    restart: unless-stopped
+    volumes:
+      - gobebio-storage:/var/www/html/storage
+    depends_on:
+      backend:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - gobebio-net
+    environment: *common-env-variables
+    command: php artisan schedule:work
+
+  # ---------------------------------------------------
+  # Microservice Biometric (FastAPI)
   # ---------------------------------------------------
   zkservice:
     build:
       context: ./zkService
       dockerfile: Dockerfile
+    image: gobebio-zkservice
     container_name: gobebio-zkservice
     restart: unless-stopped
-    # network_mode: "host"
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
     depends_on:
       mysql:
         condition: service_healthy
     networks:
-      - gobebio-net    
+      - gobebio-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
-      interval: 15s
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/docs" ]
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
 
   # ---------------------------------------------------
-  # Base de Datos MySQL
+  # Database (MySQL)
   # ---------------------------------------------------
   mysql:
     image: 'mysql/mysql-server:8.0'
     container_name: gobebio-mysql
     restart: unless-stopped
-    ports: # Exponemos el puerto para poder conectarnos desde el exterior si es necesario.
-      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
       MYSQL_DATABASE: '${DB_DATABASE}'
@@ -135,32 +135,31 @@ services:
     networks:
       - gobebio-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # ---------------------------------------------------
-  # Redis (Caché y Colas)
+  # Redis (Cache & Queue)
   # ---------------------------------------------------
   redis:
     image: 'redis:alpine'
     container_name: gobebio-redis
     restart: unless-stopped
-    ports: # Exponemos el puerto para pruebas.
-      - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - gobebio-redis-data:/data
     networks:
       - gobebio-net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
 # ---------------------------------------------------
-# Red y Volúmenes
+# Networks & Volumes
 # ---------------------------------------------------
 networks:
   gobebio-net:
@@ -171,5 +170,5 @@ volumes:
     driver: local
   gobebio-redis-data:
     driver: local
-  gobebio-storage: # Definimos el volumen nombrado para el storage de Laravel.
+  gobebio-storage:
     driver: local
