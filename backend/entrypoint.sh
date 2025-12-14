@@ -17,10 +17,28 @@ echo "Running setup..."
 # 2. Setup & Optimization
 echo "Running runtime setup..."
 
-# Ensure we start clean
-php artisan optimize:clear
+# Force clear cache files manually but KEEP the directory structure
+rm -f /var/www/html/bootstrap/cache/packages.php
+rm -f /var/www/html/bootstrap/cache/services.php
+rm -f /var/www/html/bootstrap/cache/config.php
+rm -f /var/www/html/bootstrap/cache/routes-v7.php
+rm -f /var/www/html/bootstrap/cache/*.php
 
-# Run package discovery explicitly at runtime since we skipped it in build
+# Ensure cache directory exists and is writable (Crucial for "valid cache path" error)
+mkdir -p /var/www/html/bootstrap/cache
+chown -R unit:unit /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/bootstrap/cache
+
+# Ensure storage directories exist (Crucial for Compiler.php error)
+# Volumes might hide the build-time directories, so we recreate them at runtime.
+mkdir -p /var/www/html/storage/framework/sessions
+mkdir -p /var/www/html/storage/framework/views
+mkdir -p /var/www/html/storage/framework/cache
+mkdir -p /var/www/html/storage/logs
+chown -R unit:unit /var/www/html/storage
+chmod -R 775 /var/www/html/storage
+
+# Run package discovery explicitly at runtime
 php artisan package:discover --ansi
 
 if [ ! -L "public/storage" ]; then
@@ -53,6 +71,14 @@ else
     echo "Running migrations..."
     php artisan migrate --force
     
+    # Start Unit Daemon
     echo "Starting Unit daemon..."
+    
+    # Fix permissions for Unit control socket (Crucial for "Permission denied" error)
+    if [ -d "/var/run/unit" ]; then
+        # We might not be root here, but try to fix it if possible or ensure it's writable
+        chmod -R 775 /var/run/unit
+    fi
+
     exec /usr/local/bin/docker-entrypoint.sh unitd --no-daemon --control unix:/var/run/unit/control.sock
 fi

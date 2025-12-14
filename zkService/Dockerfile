@@ -28,5 +28,11 @@ COPY . .
 
 RUN pip install --no-cache-dir /wheels/*
 
-# El comando para iniciar la aplicación se define en docker-compose.yml
+# ENV para ver logs inmediatamente
+ENV PYTHONUNBUFFERED=1
+
+# Configuración de puerto
 EXPOSE 8001
+
+# Comando de inicio
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

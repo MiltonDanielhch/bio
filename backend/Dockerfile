@@ -32,7 +32,11 @@ RUN composer install --prefer-dist --no-scripts --no-dev --no-autoloader
 # 7. Copy Application Code
 COPY . .
 
-# 8. Prepare Environment (Create .env and directories BEFORE autoload optimization)
+# 8. Clean Stale Cache (Critical fix for "Class not found" errors)
+#    Remove local cache files that might have been copied and refer to dev dependencies (like Collision).
+RUN rm -rf bootstrap/cache/*.php
+
+# 9. Prepare Environment (Create .env and directories BEFORE autoload optimization)
 #    We need these paths and .env to exist for 'php artisan package:discover' to work.
 RUN touch .env \
     && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
@@ -49,6 +53,7 @@ RUN chown -R unit:unit /var/www/html \
     && chown -R unit:unit storage bootstrap/cache
 
 # 11. Unit Configuration
+#     Ensure the socket directory exists and is writable by the unit user.
 RUN mkdir -p /var/lib/unit /var/run/unit \
     && chown -R unit:unit /var/lib/unit /var/run/unit \
     && chmod -R 775 /var/lib/unit /var/run/unit
@@ -58,5 +63,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 12. Entrypoint
+#     We stay as root here so entrypoint.sh can fix permissions if needed, 
+#     then it (or unitd) drops privileges.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-USER unit
+# USER unit  <-- REMOVED: Let entrypoint handle user switching or run as root to start, unitd drops privs.

@@ -36,7 +36,7 @@ services:
     container_name: gobebio-backend
     restart: unless-stopped
     ports:
-      - "8000:80" # Coolify will handle ingress routing to this port.
+      - "8081:80" # Coolify ocupa el 8000, cambiamos a 8081 para evitar conflicto.
     depends_on:
       mysql:
         condition: service_healthy
@@ -138,7 +138,8 @@ services:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}" ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
+      start_period: 60s
 
   # ---------------------------------------------------
   # Redis (Cache & Queue)
