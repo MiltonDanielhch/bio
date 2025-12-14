@@ -68,8 +68,36 @@ if [ "$#" -gt 0 ]; then
 else
     # Default behavior: Start Web Server
     # Run migrations ONLY here to avoid race conditions with workers
-    echo "Running migrations..."
-    php artisan migrate --force
+    # 3.1. Establecer el comando ejecutable (gosu/su)
+    if command -v gosu >/dev/null 2>&1; then
+        EXEC_CMD="gosu unit"
+    elif command -v su >/dev/null 2>&1; then
+        EXEC_CMD="su -s /bin/sh unit -c"
+    else
+        EXEC_CMD="" # Fallback a root
+    fi
+    
+    # 3.2. Ejecutar comandos esenciales como el usuario 'unit'
+    # Generar llave si es necesario (ejecutado en cada despliegue, inofensivo si ya existe)
+    # Nota: key:generate force sobrescribe la llave. Solo deberíamos ejecutarlo si no existe llave o si se desea rotar.
+    # En muchos casos, APP_KEY viene por variable de entorno y este comando puede ser redundante o peligroso si se pierden sesiones.
+    # Sin embargo, siguiendo la instrucción:
+    # $EXEC_CMD php artisan key:generate --force  <-- Comentado por seguridad, usualmente APP_KEY se inyecta por ENV.
+    
+    echo "Running migrations logic..."
+    
+    # --- LÓGICA CONDICIONAL CRÍTICA DE MIGRACIÓN (Seguridad de Datos) ---
+    # La variable RUN_FRESH_INSTALL se configura en Coolify
+    if [ "$RUN_FRESH_INSTALL" = "true" ]; then
+        echo "🚨 WARNING: Running DESTROY/RESEED (migrate:fresh) because RUN_FRESH_INSTALL=true"
+        # Borrado y siembra para la instalación INICIAL
+        $EXEC_CMD "php artisan migrate:fresh --seed --force"
+    else
+        echo "Running standard migration (migrate --force) to preserve data..."
+        # Migración normal para RE-DEPLOYS
+        $EXEC_CMD "php artisan migrate --force"
+    fi
+    # --- FIN DE LÓGICA CONDICIONAL ---
     
     # Start Unit Daemon
     echo "Starting Unit daemon..."
