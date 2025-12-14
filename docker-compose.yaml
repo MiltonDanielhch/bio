@@ -36,7 +36,7 @@ services:
       - "8080:80"
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -61,9 +61,14 @@ services:
         condition: service_started
     networks:
       - gobebio-net
-    volumes:
-      - ./backend/storage:/var/www/html/storage
+    volumes: # Usamos un volumen nombrado para evitar conflictos de permisos con el host.
+      - gobebio-storage:/var/www/html/storage
     environment: *common-env-variables
+    healthcheck: # Verifica que el proceso de Unit esté corriendo antes de considerarlo saludable.
+      test: ["CMD", "pgrep", "unitd"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ---------------------------------------------------
   # Worker de Laravel (Procesa Colas)
@@ -75,11 +80,9 @@ services:
     image: gobebio-app
     container_name: gobebio-worker
     restart: unless-stopped
-    volumes:
-      - ./backend/storage:/var/www/html/storage
-    depends_on:
-      backend:
-        condition: service_started
+    volumes: # El worker también necesita acceso al storage.
+      - gobebio-storage:/var/www/html/storage
+    depends_on: # Dependencias directas para mayor claridad.
       mysql:
         condition: service_healthy
       zkservice:
@@ -167,4 +170,6 @@ volumes:
   gobebio-mysql-data:
     driver: local
   gobebio-redis-data:
+    driver: local
+  gobebio-storage: # Definimos el volumen nombrado para el storage de Laravel.
     driver: local

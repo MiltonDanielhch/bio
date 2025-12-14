@@ -36,24 +36,24 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 RUN touch .env
 
-# 9. Establecer permisos para el directorio de la aplicación
-RUN mkdir -p storage/logs \
-    && touch storage/logs/laravel.log \
-    && chown -R unit:unit /var/www/html \
+# 9. Crear directorios y archivos de log necesarios antes de cambiar permisos
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
+    && touch storage/logs/laravel.log
+
+# 10. Establecer permisos para el directorio de la aplicación
+RUN chown -R unit:unit /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 10. [RESTABLECIDO Y CRÍTICO] Creamos los directorios de UNIT en /var/lib/unit
-#     y el directorio de RUN para el socket de control.
-RUN mkdir -p /var/lib/unit/certs /var/lib/unit/scripts /var/run/unit \
-    && chown -R unit:unit /var/lib/unit /var/run/unit
+# 11. Crear directorios para Unit y establecer permisos
+RUN mkdir -p /var/lib/unit /var/run/unit \
+    && chown -R unit:unit /var/lib/unit /var/run/unit \
+    && chmod -R 775 /var/lib/unit /var/run/unit
 
-# 11. Copiar la configuración de NGINX Unit
-COPY unit.json /docker-entrypoint.d/unit.json
-
-# 11.5. Copiar y establecer el nuevo punto de entrada
+# 12. Copiar la configuración de NGINX Unit y el script de entrada
+COPY unit.json /docker-entrypoint.d/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# 12. Cambiar al usuario sin privilegios para ejecutar la aplicación
+# 13. Establecer el punto de entrada y cambiar al usuario sin privilegios
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 USER unit
