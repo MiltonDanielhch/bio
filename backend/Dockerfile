@@ -40,8 +40,9 @@ RUN touch .env \
     && chmod -R 775 storage bootstrap/cache
 
 # 9. Optimize Autoloader
-#    Now that the environment is ready, we can run the optimization which includes package discovery.
-RUN composer dump-autoload --optimize --no-dev
+#    Use --no-scripts to prevent 'php artisan package:discover' from running during build.
+#    This avoids errors about missing .env or cache paths. Discovery will happen at runtime.
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # 10. Permissions
 RUN chown -R unit:unit /var/www/html \
