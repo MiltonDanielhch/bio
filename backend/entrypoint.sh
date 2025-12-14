@@ -32,7 +32,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 3. Iniciar el demonio de Unit directamente.
-#    Cargará la configuración desde /docker-entrypoint.d/ y se ejecutará en primer plano.
+# 3. Ceder el control al script de entrada original de la imagen base.
+#    Este se encargará de iniciar Unit correctamente con la configuración de /docker-entrypoint.d/
 echo "Starting Unit daemon..."
-exec unitd --no-daemon --control unix:/var/run/unit/control.sock
+exec /usr/local/bin/docker-entrypoint.sh unitd --no-daemon --control unix:/var/run/unit/control.sock
