@@ -14,13 +14,24 @@ echo "Database is ready!"
 # ensuring env is always fresh. In high-scale, move migration to a release phase.
 echo "Running setup..."
 
+# 2. Setup & Optimization
+echo "Running runtime setup..."
+
+# Ensure we start clean
+php artisan optimize:clear
+
+# Run package discovery explicitly at runtime since we skipped it in build
+php artisan package:discover --ansi
+
 if [ ! -L "public/storage" ]; then
     php artisan storage:link
 fi
 
-# Optimize only if we are in production
+# Cache configuration if in production
 if [ "$APP_ENV" = "production" ]; then
+    echo "Caching configuration..."
     php artisan config:cache
+    php artisan event:cache
     php artisan route:cache
     php artisan view:cache
 fi
