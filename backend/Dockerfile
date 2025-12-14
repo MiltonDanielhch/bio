@@ -32,17 +32,20 @@ RUN composer install --prefer-dist --no-scripts --no-dev --no-autoloader
 # 7. Copy Application Code
 COPY . .
 
-# 8. Optimize Autoloader
-RUN composer dump-autoload --optimize --no-dev
-RUN touch .env
+# 8. Prepare Environment (Create .env and directories BEFORE autoload optimization)
+#    We need these paths and .env to exist for 'php artisan package:discover' to work.
+RUN touch .env \
+    && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
+    && touch storage/logs/laravel.log \
+    && chmod -R 775 storage bootstrap/cache
 
-# 9. Create Storage Directories
-RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
-    && touch storage/logs/laravel.log
+# 9. Optimize Autoloader
+#    Now that the environment is ready, we can run the optimization which includes package discovery.
+RUN composer dump-autoload --optimize --no-dev
 
 # 10. Permissions
 RUN chown -R unit:unit /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chown -R unit:unit storage bootstrap/cache
 
 # 11. Unit Configuration
 RUN mkdir -p /var/lib/unit /var/run/unit \
