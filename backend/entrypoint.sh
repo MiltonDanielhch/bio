@@ -20,16 +20,19 @@ php artisan route:clear
 php artisan view:clear
 
 # Ejecuta migraciones y crea el enlace de almacenamiento de forma segura.
-php artisan migrate --force
-php artisan storage:link || echo "Storage link already exists."
+php artisan migrate --force # --force es necesario para entornos no interactivos.
+
+# Crea el enlace simbólico solo si no existe para evitar errores.
+if [ ! -L "public/storage" ]; then
+    php artisan storage:link
+fi
 
 # Crea las cachés optimizadas para producción.
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 3. Ejecutar el script de entrada original de la imagen.
-#    Este script se encargará de iniciar Unit correctamente en segundo plano
-#    y cargar la configuración desde /docker-entrypoint.d/
+# 3. Iniciar el demonio de Unit directamente.
+#    Cargará la configuración desde /docker-entrypoint.d/ y se ejecutará en primer plano.
 echo "Starting Unit daemon..."
-exec /usr/local/bin/docker-entrypoint.sh unitd --control unix:/var/run/unit/control.sock
+exec unitd --no-daemon --control unix:/var/run/unit/control.sock
