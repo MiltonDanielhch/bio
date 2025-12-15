@@ -42,8 +42,11 @@ chmod -R 775 /var/www/html/storage
 php artisan package:discover --ansi
 
 if [ ! -L "public/storage" ]; then
+    mkdir -p storage/app/public
     php artisan storage:link
 fi
+
+chmod -R 755 public
 
 # Cache configuration if in production
 if [ "$APP_ENV" = "production" ]; then

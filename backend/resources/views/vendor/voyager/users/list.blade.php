@@ -19,10 +19,7 @@
                         @if($item->person_id)
                             <table>
                                 @php
-                                    $image = asset('images/default.jpg');
-                                    if($item->person->image){
-                                        $image = asset('storage/'.str_replace('.', '-cropped.', $item->person->image));
-                                    }
+                                    $image = $item->person?->image ? Storage::url(str_replace('.', '-cropped.', $item->person->image)) : Voyager::image($item->avatar);
                                 @endphp
                                 <tr>
                                     <td ><img src="{{ $image }}" alt="{{ $item->person->first_name }} " style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px"></td>

@@ -6,22 +6,11 @@
     },
     "routes": [
         {
-            "match": {
-                "uri": [
-                    "/build/*",
-                    "/assets/*",
-                    "/storage/*",
-                    "/favicon.ico",
-                    "/robots.txt"
-                ]
-            },
             "action": {
-                "share": "/var/www/html/public/"
-            }
-        },
-        {
-            "action": {
-                "pass": "applications/laravel"
+                "share": "/var/www/html/public/",
+                "fallback": {
+                    "pass": "applications/laravel"
+                }
             }
         }
     ],

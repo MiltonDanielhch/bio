@@ -177,6 +177,7 @@
 
 @section('javascript')
 
+<script>
     $(document).ready(function () {
         setTimeout(function() {
             $('.auto-dismiss').fadeOut('slow', function() { $(this).remove(); });
@@ -202,5 +203,6 @@
             }
         });
     });
+</script>
 
 @stop

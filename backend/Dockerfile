@@ -50,7 +50,8 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # 10. Permissions
 RUN chown -R unit:unit /var/www/html \
-    && chown -R unit:unit storage bootstrap/cache
+    && chown -R unit:unit storage bootstrap/cache \
+    && chmod -R 755 public
 
 # 11. Unit Configuration
 #     Ensure the socket directory exists and is writable by the unit user.
@@ -63,7 +64,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 12. Entrypoint
-#     We stay as root here so entrypoint.sh can fix permissions if needed, 
+#     We stay as root here so entrypoint.sh can fix permissions if needed,
 #     then it (or unitd) drops privileges.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # USER unit  <-- REMOVED: Let entrypoint handle user switching or run as root to start, unitd drops privs.

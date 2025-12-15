@@ -68,17 +68,23 @@
 @stop
 
 @section('css')
-    <style>
-
-
-    </style>
+    {{-- Estilos para el plugin de "cargando" --}}
+    {{-- Asegúrate de que estos archivos existan en tu carpeta `public` --}}
+    <link rel="stylesheet" href="{{ asset('css/dataTable/dataTable.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style/page-title.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/loading/loading.css') }}">
 @stop
 
 @section('javascript')
     {{-- <script src="{{ url('js/main.js') }}"></script> --}}
 
+
+    <script src="{{ asset('js/dataTable/dataTable.js') }}"></script>
     {{-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> --}}
     <script>
+        // Incluir el plugin de "cargando"
+        // Nota: Asegúrate de que este archivo exista en public/vendor/loading/loading.js
+        // Si no existe, deberás añadirlo a tu proyecto.
         var countPage = 10, order = 'id', typeOrder = 'desc';
         var timeout = null;
         $(document).ready(() => {
