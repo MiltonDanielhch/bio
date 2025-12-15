@@ -6,11 +6,35 @@
     },
     "routes": [
         {
+            "match": {
+                "uri": [
+                    "*.css",
+                    "*.js",
+                    "*.png",
+                    "*.jpg",
+                    "*.jpeg",
+                    "*.gif",
+                    "*.ico",
+                    "*.svg",
+                    "*.woff",
+                    "*.woff2",
+                    "*.ttf",
+                    "*.eot",
+                    "*.otf",
+                    "*.map",
+                    "/storage/*"
+                ]
+            },
             "action": {
-                "share": "/var/www/html/public/",
+                "share": "/var/www/html/public$uri",
                 "fallback": {
                     "pass": "applications/laravel"
                 }
+            }
+        },
+        {
+            "action": {
+                "pass": "applications/laravel"
             }
         }
     ],

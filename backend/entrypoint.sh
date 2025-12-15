@@ -10,7 +10,7 @@ done
 echo "Database is ready!"
 
 # 2. Production Setup (Only run this broadly, specific commands will follow)
-# We run this on every container start for simplicity in this setup, 
+# We run this on every container start for simplicity in this setup,
 # ensuring env is always fresh. In high-scale, move migration to a release phase.
 echo "Running setup..."
 
@@ -41,12 +41,14 @@ chmod -R 775 /var/www/html/storage
 # Run package discovery explicitly at runtime
 php artisan package:discover --ansi
 
-if [ ! -L "public/storage" ]; then
-    mkdir -p storage/app/public
-    php artisan storage:link
-fi
+# --- PUBLICACIÓN DE ASSETS Y ENLACE DE STORAGE ---
+# Esto es crucial y debe ejecutarse siempre, tanto en desarrollo como en producción.
 
-chmod -R 755 public
+# 1. Publica los assets de Voyager (CSS, JS, etc.) para que el servidor web los encuentre.
+php artisan vendor:publish --provider="TCG\Voyager\VoyagerServiceProvider" --tag=public --force
+
+# 2. Recrea el enlace simbólico para que los archivos subidos (imágenes, etc.) sean accesibles.
+php artisan storage:link --force
 
 # Cache configuration if in production
 if [ "$APP_ENV" = "production" ]; then
@@ -58,6 +60,7 @@ if [ "$APP_ENV" = "production" ]; then
 fi
 
 # 3. Decision Logic
+
 # If arguments are passed to the container (e.g. via 'command' in docker-compose), execute them.
 # Otherwise, start the Nginx Unit web server.
 if [ "$#" -gt 0 ]; then
@@ -65,7 +68,7 @@ if [ "$#" -gt 0 ]; then
     if [ "${1#-}" != "$1" ]; then
         set -- unitd "$@"
     fi
-    
+
     echo "Executing command: $@"
     exec "$@"
 else
@@ -79,16 +82,16 @@ else
     else
         EXEC_CMD="" # Fallback a root
     fi
-    
+
     # 3.2. Ejecutar comandos esenciales como el usuario 'unit'
     # Generar llave si es necesario (ejecutado en cada despliegue, inofensivo si ya existe)
     # Nota: key:generate force sobrescribe la llave. Solo deberíamos ejecutarlo si no existe llave o si se desea rotar.
     # En muchos casos, APP_KEY viene por variable de entorno y este comando puede ser redundante o peligroso si se pierden sesiones.
     # Sin embargo, siguiendo la instrucción:
     # $EXEC_CMD php artisan key:generate --force  <-- Comentado por seguridad, usualmente APP_KEY se inyecta por ENV.
-    
+
     echo "Running migrations logic..."
-    
+
     # --- LÓGICA CONDICIONAL CRÍTICA DE MIGRACIÓN (Seguridad de Datos) ---
     # La variable RUN_FRESH_INSTALL se configura en Coolify
     if [ "$RUN_FRESH_INSTALL" = "true" ]; then
@@ -101,10 +104,10 @@ else
         $EXEC_CMD "php artisan migrate --force"
     fi
     # --- FIN DE LÓGICA CONDICIONAL ---
-    
+
     # Start Unit Daemon
     echo "Starting Unit daemon..."
-    
+
     # Fix permissions for Unit control socket (Crucial for "Permission denied" error)
     if [ -d "/var/run/unit" ]; then
         # We might not be root here, but try to fix it if possible or ensure it's writable
