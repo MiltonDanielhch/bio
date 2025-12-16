@@ -10,6 +10,7 @@ use App\Http\Controllers\AsignacionHorarioController;
 use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\EmpleadoController;
 use App\Http\Controllers\Admin\DispositivoController; // Importa el nuevo controlador
+use App\Http\Controllers\Admin\PeriodoPlanillaController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\RegistroAsistenciaController;
@@ -94,6 +95,21 @@ Route::prefix('admin')->middleware(['loggin', 'system'])->group(function () {
     // Incidencias
     Route::get('incidencias/ajax/list', [\App\Http\Controllers\IncidenciaController::class, 'list'])->name('admin.incidencias.ajax.list');
     Route::resource('incidencias', \App\Http\Controllers\IncidenciaController::class)->except(['show'])->names('admin.incidencias');
+
+    // ───────────────── PERÍODOS DE PLANILLA ─────────────────
+    Route::prefix('periodos-planilla')->name('admin.periodos.')->group(function () {
+        Route::get('/', [PeriodoPlanillaController::class, 'index'])->name('index');
+        Route::get('create', [PeriodoPlanillaController::class, 'create'])->name('create');
+        Route::post('/', [PeriodoPlanillaController::class, 'store'])->name('store');
+        Route::get('{id}', [PeriodoPlanillaController::class, 'show'])->name('show');
+        Route::delete('{id}', [PeriodoPlanillaController::class, 'destroy'])->name('destroy');
+        
+        // Acciones especiales
+        Route::post('{id}/cerrar', [PeriodoPlanillaController::class, 'cerrar'])->name('cerrar');
+        Route::post('{id}/reabrir', [PeriodoPlanillaController::class, 'reabrir'])->name('reabrir');
+        Route::get('{id}/exportar', [PeriodoPlanillaController::class, 'exportar'])->name('exportar');
+        Route::get('{periodoId}/empleado/{empleadoId}', [PeriodoPlanillaController::class, 'verEmpleado'])->name('empleado');
+    });
 
     // ───────────────── RUTAS LEGACY (REFACTORIZADAS) ─────────────────
 

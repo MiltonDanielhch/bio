@@ -91,6 +91,28 @@ erDiagram
         string nombre UK
     }
 
+    periodos_planilla {
+        int id PK
+        int empresa_id FK
+        string nombre
+        string codigo UK
+        date fecha_inicio
+        date fecha_fin
+        enum estado
+    }
+
+    resumen_mensual_asistencia {
+        int id PK
+        int periodo_id FK
+        int empleado_id FK
+        int total_dias_laborables
+        int total_dias_trabajados
+        int total_dias_falta
+        int total_tardanzas
+        decimal total_horas_trabajadas
+        decimal total_horas_extra
+    }
+
     empresas ||--|{ sucursales : "tiene"
     sucursales ||--|{ departamentos : "tiene"
     sucursales ||--|{ dispositivos : "tiene"
@@ -106,6 +128,9 @@ erDiagram
     dispositivos ||--o{ registros_asistencia : "captura"
     empleados ||--o{ incidencias : "reporta"
     tipos_incidencia ||--o{ incidencias : "clasifica"
+    empresas ||--o{ periodos_planilla : "tiene"
+    periodos_planilla ||--o{ resumen_mensual_asistencia : "contiene"
+    empleados ||--o{ resumen_mensual_asistencia : "tiene resumen en"
 ```
 
 ## 4.2. Descripción de Tablas Clave
@@ -139,6 +164,10 @@ erDiagram
 ### Reportes y Logs
 *   **`reportes_asistencia`**: Gestiona la generación de reportes de asistencia. Almacena la configuración (fechas, filtros) y el estado del reporte (procesando, completado), así como la ruta al archivo generado.
 *   **`logs_sistema`**: Tabla de auditoría que registra acciones importantes en el sistema, como la creación o modificación de registros, guardando el "antes" y el "después" para un seguimiento detallado.
+
+### Gestión de Planillas (Cierre Mensual)
+*   **`periodos_planilla`**: Define los períodos de planilla (generalmente mensuales) que pueden ser cerrados para generar un resumen consolidado. Incluye fechas de inicio/fin, estado (abierto, procesando, cerrado, error), y auditoría de quién y cuándo cerró el período.
+*   **`resumen_mensual_asistencia`**: Almacena el resumen consolidado e inmutable de asistencia por empleado para cada período cerrado. Incluye totales de días trabajados, faltas, tardanzas, minutos de atraso, horas trabajadas, horas programadas y horas extra clasificadas (25%, 50%, 100%). También almacena detalles en JSON como fechas de faltas y desglose de tardanzas. Es la tabla clave para exportar a planilla de nómina.
 
 ### Tablas del Sistema (Laravel y Otros)
 *   **`jobs`**: Tabla estándar de Laravel para gestionar la cola de trabajos (jobs) que se ejecutan en segundo plano, como la generación de reportes.
