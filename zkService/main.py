@@ -15,6 +15,14 @@ async def lifespan(app: FastAPI):
     al arrancar y las limpia al apagar.
     """
     logger.info("Iniciando tareas en segundo plano...")
+    
+    # DEBUG: Imprimir configuración cargada
+    from config import settings
+    logger.info(f"--- DEBUG CONFIGURATION ---")
+    logger.info(f"API_KEY (len={len(settings.API_KEY)}): {settings.API_KEY}")
+    logger.info(f"KNOWN_DEVICES: {settings.KNOWN_DEVICES}")
+    logger.info(f"---------------------------")
+
     background_task = asyncio.create_task(start_background_tasks())
     
     yield # La aplicación se ejecuta aquí

@@ -19,7 +19,7 @@ x-common-env-variables: &common-env-variables
   REDIS_HOST: redis
   REDIS_PORT: 6379
 
-  ZK_SERVICE_URL: 'http://zkservice:8001'
+  ZK_SERVICE_URL: 'http://host.docker.internal:8001'
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
 services:
@@ -42,6 +42,8 @@ services:
         condition: service_started
     networks:
       - gobebio-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - gobebio-storage:/var/www/html/storage
     environment: *common-env-variables
@@ -69,6 +71,8 @@ services:
         condition: service_started
     networks:
       - gobebio-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment: *common-env-variables
     command: php artisan queue:work --sleep=3 --tries=3
 
@@ -90,6 +94,8 @@ services:
         condition: service_started
     networks:
       - gobebio-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment: *common-env-variables
     command: php artisan schedule:work
 
@@ -115,6 +121,18 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    environment:
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_USERNAME: '${DB_USERNAME}'
+      DB_PASSWORD: '${DB_PASSWORD}'
+      API_KEY: '${ZK_SERVICE_API_KEY}'
+      # Configuración de dispositivos ZKTeco
+      KNOWN_DEVICES: "192.168.14.203" # Lista de dispositivos separados por coma
+      DEVICE_PORT: "4370"
+      DEVICE_TIMEOUT: "5"
+      DEVICE_PASSWORD: "0"
 
   # ---------------------------------------------------
   # Database (MySQL)
@@ -123,6 +141,8 @@ services:
     image: 'mysql/mysql-server:8.0'
     container_name: gobebio-mysql
     restart: unless-stopped
+    ports:
+      - "3307:3306" # Exponer en 3307 para evitar conflicto con MySQL local (3306)
     environment:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
       MYSQL_DATABASE: '${DB_DATABASE}'

@@ -27,7 +27,7 @@ class DeviceConnection:
             port=self.port,
             timeout=settings.DEVICE_TIMEOUT,
             password=self.password or 0,
-            ommit_ping=False,
+            ommit_ping=True, # Saltar ping porque suele fallar en Docker/Windows host mode
             verbose=settings.DEBUG
         )
         self.conn = None
