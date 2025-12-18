@@ -1,11 +1,18 @@
 from fastapi import FastAPI, Request
 import logging
+import sys
 from contextlib import asynccontextmanager
 from routers import devices, health, ws
 from background.tasks import start_background_tasks
 from services.zk_service import cleanup_devices
 import asyncio
 
+# Configurar logging para que salga por consola inmediatamente
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -47,6 +54,9 @@ async def debug_headers(request: Request, call_next):
     logger.info(f"--- SOLICITUD ENTRANTE: {request.method} {request.url} ---")
     # Imprimir el valor exacto de la API KEY recibida (entre comillas para ver espacios)
     received_key = request.headers.get("x-api-key")
+    
+    # Usamos print con flush=True para asegurar que salga en Docker pase lo que pase
+    print(f"--- DEBUG FORCE: Header 'x-api-key' recibido: '{received_key}' ---", flush=True)
     logger.info(f"Header 'x-api-key' recibido: '{received_key}'")
     
     response = await call_next(request)
