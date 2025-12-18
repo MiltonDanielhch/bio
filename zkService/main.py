@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import logging
 from contextlib import asynccontextmanager
 from routers import devices, health, ws
@@ -40,6 +40,18 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan
 )
+
+# --- DEBUG MIDDLEWARE: Ver qué headers llegan realmente ---
+@app.middleware("http")
+async def debug_headers(request: Request, call_next):
+    logger.info(f"--- SOLICITUD ENTRANTE: {request.method} {request.url} ---")
+    # Imprimir el valor exacto de la API KEY recibida (entre comillas para ver espacios)
+    received_key = request.headers.get("x-api-key")
+    logger.info(f"Header 'x-api-key' recibido: '{received_key}'")
+    
+    response = await call_next(request)
+    logger.info(f"Respuesta enviada: {response.status_code}")
+    return response
 
 # Registrar routers
 app.include_router(devices.router)
