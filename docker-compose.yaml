@@ -132,7 +132,7 @@ services:
       KNOWN_DEVICES: "192.168.14.203" # Lista de dispositivos separados por coma
       DEVICE_PORT: "4370"
       DEVICE_TIMEOUT: "5"
-      DEVICE_PASSWORD: "0"
+      DEVICE_PASSWORD: "123456"
 
   # ---------------------------------------------------
   # Database (MySQL)
