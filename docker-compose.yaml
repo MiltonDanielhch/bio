@@ -19,7 +19,7 @@ x-common-env-variables: &common-env-variables
   REDIS_HOST: redis
   REDIS_PORT: 6379
 
-  ZK_SERVICE_URL: 'http://host.docker.internal:8001'
+  ZK_SERVICE_URL: 'http://gobebio-zkservice:8001'
   ZK_SERVICE_API_KEY: '${ZK_SERVICE_API_KEY}'
 
 services:
@@ -110,7 +110,7 @@ services:
     container_name: gobebio-zkservice
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "8005:8001"
     depends_on:
       mysql:
         condition: service_healthy
