@@ -43,7 +43,7 @@ class AsignacionHorarioController extends Controller
     {
         $this->authorize('create', AsignacionHorario::class);
         $empleados = Empleado::where('estado', 'activo')->orderBy('apellidos')->get();
-        $horarios = Horario::where('estado', 'activo')->orderBy('nombre_horario')->get();
+        $horarios = Horario::select('*', 'nombre as nombre_horario')->orderBy('nombre')->get();
         return view('admin.asignacion-horarios.edit-add', [
             'asignacion' => new AsignacionHorario(['activo' => true]),
             'empleados' => $empleados,
@@ -67,7 +67,7 @@ class AsignacionHorarioController extends Controller
     {
         $this->authorize('update', $asignacionHorario);
         $empleados = Empleado::where('estado', 'activo')->orderBy('apellidos')->get();
-        $horarios = Horario::where('estado', 'activo')->orderBy('nombre_horario')->get();
+        $horarios = Horario::select('*', 'nombre as nombre_horario')->orderBy('nombre')->get();
         return view('admin.asignacion-horarios.edit-add', [
             'asignacion' => $asignacionHorario,
             'empleados' => $empleados,

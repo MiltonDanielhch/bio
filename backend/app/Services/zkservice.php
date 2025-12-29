@@ -26,6 +26,25 @@ class ZkService
     }
 
     /**
+     * Verifica la salud del microservicio ZK.
+     *
+     * @return bool
+     */
+    public function checkHealth(): bool
+    {
+        try {
+            $response = Http::withHeaders(['x-api-key' => $this->apiKey])
+                ->timeout(5)
+                ->get("{$this->baseUrl}/health");
+
+            return $response->successful() && ($response->json()['status'] ?? '') === 'ok';
+        } catch (\Exception $e) {
+            Log::warning("ZkService: El microservicio no está respondiendo: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Obtiene la información de un dispositivo.
      *
      * @param string $ip
@@ -82,11 +101,13 @@ class ZkService
     private function makeRequest(string $method, string $endpoint, array $params = []): ?array
     {
         try {
-            $response = Http::withHeaders(['x-api-key' => $this->apiKey])
-                ->timeout(15) // Aumentar el timeout para operaciones de hardware
-                ->{$method}($endpoint, $params);
+            return retry(3, function () use ($method, $endpoint, $params) {
+                $response = Http::withHeaders(['x-api-key' => $this->apiKey])
+                    ->timeout(15) // Timeout para cada intento
+                    ->{$method}($endpoint, $params);
 
-            return $response->throw()->json();
+                return $response->throw()->json();
+            }, 500); // 500ms de espera entre reintentos
         } catch (\Exception $e) {
             Log::error("Error en la petición a ZkService ({$endpoint}): " . $e->getMessage());
             // Relanzar la excepción para que el controlador la capture y muestre un mensaje de error.

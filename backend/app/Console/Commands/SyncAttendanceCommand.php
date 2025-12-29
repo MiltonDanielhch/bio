@@ -3,7 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Jobs\SyncAttendanceJob;
-use App\Models\Dispositivo; // Importa el modelo Dispositivo
+use App\Models\Dispositivo;
+use App\Services\ZkService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -28,8 +29,14 @@ class SyncAttendanceCommand extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(\App\Services\ZkService $zkService)
     {
+        // Verificar salud del microservicio antes de proceder
+        if (!$zkService->checkHealth()) {
+            $this->error("El microservicio ZkService no está disponible. Abortando sincronización.");
+            return Command::FAILURE;
+        }
+
         $ip = $this->argument('ip');
         $clear = $this->option('clear');
 

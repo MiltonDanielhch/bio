@@ -40,7 +40,10 @@ class SyncAttendanceJob implements ShouldQueue
      */
     public function handle(ZkService $zkService)
     {
-        Log::info("Iniciando SyncAttendanceJob para el dispositivo: {$this->dispositivo->direccion_ip}");
+        $startTime = now();
+        $recordsProcessed = 0;
+        $recordsIgnored = 0;
+        $mappingFailures = [];
 
         try {
             // 1. Obtener datos crudos desde el microservicio
@@ -49,6 +52,12 @@ class SyncAttendanceJob implements ShouldQueue
                 $this->dispositivo->puerto,
                 $this->dispositivo->password
             );
+
+            // Actualizar estado de conexión exitosa
+            $this->dispositivo->update([
+                'ultima_conexion' => now(),
+                'estado' => 'activo' // Asegurar que esté activo si respondió
+            ]);
 
             if (empty($rawRecords)) {
                 Log::info("No hay registros de asistencia nuevos para el dispositivo {$this->dispositivo->direccion_ip}.");
@@ -63,7 +72,7 @@ class SyncAttendanceJob implements ShouldQueue
                     ->where('zk_user_id', $rawRecord['uid'])
                     ->value('empleado_id');
 
-                // FALLBACK: Si no se encuentra por UID, intentar buscar por user_id (código de empleado O DNI)
+                // FALLBACK: Si no se encuentra por UID, intentar buscar por user_id
                 if (!$empleadoId) {
                     $empleado = DB::table('empleados')
                         ->join('dispositivo_empleado', 'empleados.id', '=', 'dispositivo_empleado.empleado_id')
@@ -77,72 +86,97 @@ class SyncAttendanceJob implements ShouldQueue
 
                     if ($empleado) {
                         $empleadoId = $empleado->id;
-                        // Auto-corrección: Actualizar el zk_user_id en la tabla pivot para futuras sincronizaciones
                         DB::table('dispositivo_empleado')
                             ->where('id', $empleado->pivot_id)
                             ->update(['zk_user_id' => $rawRecord['uid']]);
-                        
-                        Log::info("Auto-corrección: Mapeado empleado {$empleadoId} por código '{$rawRecord['user_id']}' y actualizado zk_user_id a {$rawRecord['uid']}.");
                     }
                 }
 
                 if (!$empleadoId) {
-                    Log::warning("No se encontró mapeo para uid {$rawRecord['uid']} (user_id: {$rawRecord['user_id']}) en el dispositivo {$this->dispositivo->direccion_ip}.");
-                    continue; // Saltar si no hay mapeo
+                    $mappingFailures[] = $rawRecord['user_id'];
+                    continue;
                 }
 
                 // 4. Mapear valores y preparar para la inserción
                 $processedRecord = [
                     'empleado_id' => $empleadoId,
                     'dispositivo_id' => $this->dispositivo->id,
-                    'fecha_hora' => Carbon::parse($rawRecord['timestamp']), // Asegúrate de que sea un objeto Carbon
+                    'fecha_hora' => Carbon::parse($rawRecord['timestamp']),
                     'fecha_local' => Carbon::parse($rawRecord['timestamp'])->toDateString(),
                     'hora_local' => Carbon::parse($rawRecord['timestamp'])->toTimeString(),
                     'tipo_marcaje' => $this->mapPunch($rawRecord['punch']),
-                    'tipo_verificacion' => $this->mapStatus($rawRecord['status']), // Asumiendo que 'status' se mapea a tipo_verificacion
-                    // ... otros campos que necesites de la tabla registros_asistencia
+                    'tipo_verificacion' => $this->mapStatus($rawRecord['status']),
+                    'estado_validacion' => 'pendiente',
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
 
-                // 5. Inserción segura (usando insertOrIgnore para evitar duplicados)
-                DB::table('registros_asistencia')->insertOrIgnore($processedRecord);
+                // 5. Inserción segura
+                $inserted = DB::table('registros_asistencia')->insertOrIgnore($processedRecord);
+                
+                if ($inserted) {
+                    $recordsProcessed++;
+                } else {
+                    $recordsIgnored++;
+                }
             }
 
             // 6. Limpieza (Opcional)
-            if ($this->clearAfterSync) {
+            if ($this->clearAfterSync && $recordsProcessed > 0) {
                 $zkService->clearAttendance($this->dispositivo->direccion_ip, $this->dispositivo->puerto, $this->dispositivo->password);
-                Log::info("Registros de asistencia borrados del dispositivo {$this->dispositivo->direccion_ip}.");
             }
 
-            Log::info("SyncAttendanceJob completado para el dispositivo: {$this->dispositivo->direccion_ip}. Se procesaron " . count($rawRecords) . " registros.");
+            // Registro en Log del Sistema
+            \App\Models\LogSistema::registrar(
+                'sincronizacion_asistencia',
+                "Sincronización completada para {$this->dispositivo->nombre_dispositivo}. Procesados: {$recordsProcessed}, Duplicados: {$recordsIgnored}, Fallos Mapeo: " . count($mappingFailures),
+                null,
+                [
+                    'dispositivo_id' => $this->dispositivo->id,
+                    'ip' => $this->dispositivo->direccion_ip,
+                    'procesados' => $recordsProcessed,
+                    'ignorados' => $recordsIgnored,
+                    'fallos_mapeo' => $mappingFailures,
+                    'duracion' => $startTime->diffInSeconds(now()) . 's'
+                ],
+                'registros_asistencia'
+            );
 
         } catch (\Exception $e) {
-            Log::error("Error durante la sincronización de asistencia para {$this->dispositivo->direccion_ip}: {$e->getMessage()}");
-            $this->fail($e); // Marca el job como fallido
-            return;
+            // Actualizar estado de error en el dispositivo si es posible
+            Log::error("Error en SyncAttendanceJob para {$this->dispositivo->direccion_ip}: {$e->getMessage()}");
+            
+            \App\Models\LogSistema::registrar(
+                'error_sincronizacion',
+                "Fallo al sincronizar {$this->dispositivo->nombre_dispositivo}: {$e->getMessage()}",
+                null,
+                ['error' => $e->getMessage(), 'dispositivo_id' => $this->dispositivo->id],
+                'dispositivos'
+            );
+
+            $this->fail($e);
         }
     }
 
     private function mapPunch(int $punch): string
     {
-        switch ($punch) {
-            case 0: return 'entrada';
-            case 1: return 'salida';
-            case 2: return 'entrada_almuerzo'; // O el que corresponda
-            case 3: return 'salida_almuerzo';  // O el que corresponda
-            default: return 'general';
-        }
+        return match ($punch) {
+            0 => 'entrada',
+            1 => 'salida',
+            2 => 'entrada_almuerzo',
+            3 => 'salida_almuerzo',
+            default => 'general',
+        };
     }
 
     private function mapStatus(int $status): string
     {
-        // Estos valores pueden variar según el modelo ZKTeco o la librería pyzk.
-        // Deberías consultar la documentación de pyzk o realizar pruebas.
-        switch ($status) {
-            case 1: return 'huella';
-            case 2: return 'tarjeta';
-            case 3: return 'password';
-            case 4: return 'rostro';
-            default: return 'desconocido';
-        }
+        return match ($status) {
+            1 => 'huella',
+            2 => 'tarjeta',
+            3 => 'clave',
+            4 => 'rostro',
+            default => 'manual',
+        };
     }
 }
